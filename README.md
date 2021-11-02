@@ -1,5 +1,5 @@
-# minmax-tictactoe
-A simple minmax tictactoe game in Nim
+# minmax-checkers
+A simple minmax checkers game in Nim
 
 ## Compilation
 Get SDL2 dll: `nimble deps`

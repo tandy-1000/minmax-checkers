@@ -3,7 +3,7 @@ import pkg/[oolib, nico]
 
 const
   orgName* = "org"
-  appName* = "TicTacToe"
+  appName* = "Checkers"
 
 type
   GridValue* = enum
@@ -123,7 +123,7 @@ class pub Board:
         grid[pos[0]][pos[1]] = GridValue.none
 
 
-class pub TicTacToe:
+class pub Checkers:
   var
     gridBounds: seq[seq[Square]]
     gridSquare: Square
@@ -136,7 +136,7 @@ class pub TicTacToe:
     gameResult = GridValue.none
     turn = GridValue.cross
 
-  proc `new`: TicTacToe =
+  proc `new`: Checkers =
     var
       x, y, x1, y1: int = self.offset
       gridRow: seq[Square]
@@ -190,7 +190,7 @@ class pub TicTacToe:
     setColor(7)
     printc(message, xCenter, yCenter)
 
-var ttt = newTicTacToe()
+var c = newCheckers()
 
 
 proc gameInit*() =
@@ -201,50 +201,50 @@ proc gameDraw*() =
   setColor(7)
   printc("Tic Tac Toe", screenWidth div 2, 8)
     
-  for y, row in enumerate(ttt.gridBounds):
+  for y, row in enumerate(c.gridBounds):
     for x, square in enumerate(row):
       rect(square.x, square.y, square.x1, square.y1)
-      ttt.drawPiece(ttt.board.grid[y][x], square)
+      c.drawPiece(c.board.grid[y][x], square)
 
-  if ttt.outOfBounds:
-    ttt.playedPosition = true
+  if c.outOfBounds:
+    c.playedPosition = true
     setColor(4)
     printc("Please click within the grid!", screenWidth div 2, 120)
   
-  if not ttt.playedPosition:
+  if not c.playedPosition:
     setColor(4)
     printc("This position has been played!", screenWidth div 2, 120)
   
-  if ttt.gameResult == GridValue.cross:
-    ttt.gameOverMessage("You Win!", 3)
-  elif ttt.gameResult == GridValue.naught:
-    ttt.gameOverMessage("You Lose!", 4)
-  elif ttt.gameResult == GridValue.none and ttt.gameOver == true:
-    ttt.gameOverMessage("Game Over.", 4)
+  if c.gameResult == GridValue.cross:
+    c.gameOverMessage("You Win!", 3)
+  elif c.gameResult == GridValue.naught:
+    c.gameOverMessage("You Lose!", 4)
+  elif c.gameResult == GridValue.none and c.gameOver == true:
+    c.gameOverMessage("Game Over.", 4)
 
 proc gameUpdate*(dt: float32) =
   setColor(7)
-  (ttt.gameOver, ttt.gameResult) = ttt.board.isGameOver()
-  if ttt.turn == GridValue.cross and ttt.gameOver == false:
+  (c.gameOver, c.gameResult) = c.board.isGameOver()
+  if c.turn == GridValue.cross and c.gameOver == false:
     if mousebtnp(0):
       let pos = mouse()
-      ttt.outOfBounds = ttt.isOutOfBounds(pos, ttt.gridSquare)
-      if not ttt.outOfBounds:
-        while ttt.turn == GridValue.cross:
+      c.outOfBounds = c.isOutOfBounds(pos, c.gridSquare)
+      if not c.outOfBounds:
+        while c.turn == GridValue.cross:
           let
-            x = (pos[0] - ttt.offset) div ttt.size
-            y = (pos[1] - ttt.offset) div ttt.size
-          ttt.playedPosition = ttt.board.placePiece((x, y), GridValue.cross)
-          ttt.turn = GridValue.naught
-        ttt.outOfBounds = false
-      (ttt.gameOver, ttt.gameResult) = ttt.board.isGameOver()
-  elif ttt.turn == GridValue.naught and ttt.gameOver == false:
-    while ttt.turn == GridValue.naught:
-      discard ttt.board.minimax(0, GridValue.naught, ttt.board.grid)
-      ttt.board.availablePositions = ttt.board.getAvailablePositions(ttt.board.grid)
-      ttt.playedPosition = ttt.board.placePiece(ttt.board.getBestMove(), GridValue.naught)
-      ttt.turn = GridValue.cross
-    (ttt.gameOver, ttt.gameResult) = ttt.board.isGameOver()
+            x = (pos[0] - c.offset) div c.size
+            y = (pos[1] - c.offset) div c.size
+          c.playedPosition = c.board.placePiece((x, y), GridValue.cross)
+          c.turn = GridValue.naught
+        c.outOfBounds = false
+      (c.gameOver, c.gameResult) = c.board.isGameOver()
+  elif c.turn == GridValue.naught and c.gameOver == false:
+    while c.turn == GridValue.naught:
+      discard c.board.minimax(0, GridValue.naught, c.board.grid)
+      c.board.availablePositions = c.board.getAvailablePositions(c.board.grid)
+      c.playedPosition = c.board.placePiece(c.board.getBestMove(), GridValue.naught)
+      c.turn = GridValue.cross
+    (c.gameOver, c.gameResult) = c.board.isGameOver()
 
 
 nico.init(orgName, appName)
