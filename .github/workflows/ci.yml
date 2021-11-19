@@ -1,0 +1,42 @@
+name: CI
+on:
+  push:
+    paths:
+      - "src/*"
+      - "tests/*"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: [devel]
+
+    name: 'Nim ${{ matrix.branch }}'
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: minmax-checkers
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.4.0
+        with:
+          path: minmax-checkers
+
+      - name: Setup Nim
+        uses: alaviss/setup-nim@0.1.1
+        with:
+          path: nim
+          version: ${{ matrix.branch }}
+
+      - name: Get SDL
+        run: sudo apt-get install libsdl2-2.0
+
+      - name: Install dependencies
+        run: nimble install -y --depsOnly
+
+      - name: Run tests
+        run: nimble test
