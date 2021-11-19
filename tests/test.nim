@@ -19,7 +19,7 @@ suite "Board tests":
   setup:
     let
       board = newBoard(difficulty = Difficulty.impossible)
-      player = GridValue.cross
+      player = GridValue.black
       positions = @[newPosition(0), newPosition(1)]
 
   test "Find position":
@@ -39,7 +39,7 @@ suite "Board tests":
   test "Place piece":
     let
       move = board.placePiece(newPosition(0), player)
-      grid = @[GridValue.cross, GridValue.none, GridValue.none, GridValue.none, GridValue.none, GridValue.none, GridValue.none, GridValue.none, GridValue.none]
+      grid = @[GridValue.black, GridValue.none, GridValue.none, GridValue.none, GridValue.none, GridValue.none, GridValue.none, GridValue.none, GridValue.none]
     check move == true and board.grid == grid
 
   test "Place piece in occupied position":
@@ -50,9 +50,9 @@ suite "Board tests":
   test "Vertical win: left column":
     let
       grid = @[
-        GridValue.cross, GridValue.none, GridValue.naught,
-        GridValue.cross, GridValue.naught, GridValue.none,
-        GridValue.cross, GridValue.none, GridValue.none
+        GridValue.black, GridValue.none, GridValue.white,
+        GridValue.black, GridValue.white, GridValue.none,
+        GridValue.black, GridValue.none, GridValue.none
       ]
       win = board.hasPlayerWon(player, grid)
       (gameOver, winner) = board.isGameOver(grid, board.getAvailablePositions(grid))
@@ -62,9 +62,9 @@ suite "Board tests":
   test "Vertical win: middle column":
     let
       grid = @[
-        GridValue.naught, GridValue.cross, GridValue.naught,
-        GridValue.naught, GridValue.cross, GridValue.cross,
-        GridValue.cross, GridValue.cross, GridValue.naught
+        GridValue.white, GridValue.black, GridValue.white,
+        GridValue.white, GridValue.black, GridValue.black,
+        GridValue.black, GridValue.black, GridValue.white
       ]
       win = board.hasPlayerWon(player, grid)
       (gameOver, winner) = board.isGameOver(grid, board.getAvailablePositions(grid))
@@ -74,9 +74,9 @@ suite "Board tests":
   test "Vertical win: right column":
     let
       grid = @[
-        GridValue.naught, GridValue.naught, GridValue.cross,
-        GridValue.naught, GridValue.naught, GridValue.cross,
-        GridValue.cross, GridValue.cross, GridValue.cross
+        GridValue.white, GridValue.white, GridValue.black,
+        GridValue.white, GridValue.white, GridValue.black,
+        GridValue.black, GridValue.black, GridValue.black
       ]
       win = board.hasPlayerWon(player, grid)
       (gameOver, winner) = board.isGameOver(grid, board.getAvailablePositions(grid))
@@ -86,9 +86,9 @@ suite "Board tests":
   test "Horizontal win: top row":
     let
       grid = @[
-        GridValue.cross, GridValue.cross, GridValue.cross,
-        GridValue.naught, GridValue.cross, GridValue.naught,
-        GridValue.none, GridValue.naught, GridValue.naught
+        GridValue.black, GridValue.black, GridValue.black,
+        GridValue.white, GridValue.black, GridValue.white,
+        GridValue.none, GridValue.white, GridValue.white
       ]
       win = board.hasPlayerWon(player, grid)
       (gameOver, winner) = board.isGameOver(grid, board.getAvailablePositions(grid))
@@ -98,9 +98,9 @@ suite "Board tests":
   test "Horizontal win: middle row":
     let
       grid = @[
-        GridValue.naught, GridValue.none, GridValue.none,
-        GridValue.cross, GridValue.cross, GridValue.cross,
-        GridValue.none, GridValue.naught, GridValue.naught
+        GridValue.white, GridValue.none, GridValue.none,
+        GridValue.black, GridValue.black, GridValue.black,
+        GridValue.none, GridValue.white, GridValue.white
       ]
       win = board.hasPlayerWon(player, grid)
       (gameOver, winner) = board.isGameOver(grid, board.getAvailablePositions(grid))
@@ -110,9 +110,9 @@ suite "Board tests":
   test "Horizontal win: bottom row":
     let
       grid = @[
-        GridValue.naught, GridValue.none, GridValue.none,
-        GridValue.cross, GridValue.naught, GridValue.naught,
-        GridValue.cross, GridValue.cross, GridValue.cross
+        GridValue.white, GridValue.none, GridValue.none,
+        GridValue.black, GridValue.white, GridValue.white,
+        GridValue.black, GridValue.black, GridValue.black
       ]
       win = board.hasPlayerWon(player, grid)
       (gameOver, winner) = board.isGameOver(grid, board.getAvailablePositions(grid))
@@ -122,9 +122,9 @@ suite "Board tests":
   test "Diagonal win: left":
     let
       grid = @[
-        GridValue.cross, GridValue.none, GridValue.naught,
-        GridValue.none, GridValue.cross, GridValue.naught,
-        GridValue.none, GridValue.none, GridValue.cross
+        GridValue.black, GridValue.none, GridValue.white,
+        GridValue.none, GridValue.black, GridValue.white,
+        GridValue.none, GridValue.none, GridValue.black
       ]
       win = board.hasPlayerWon(player, grid)
       (gameOver, winner) = board.isGameOver(grid, board.getAvailablePositions(grid))
@@ -134,9 +134,9 @@ suite "Board tests":
   test "Diagonal win: right":
     let
       grid = @[
-        GridValue.naught, GridValue.none, GridValue.cross,
-        GridValue.none, GridValue.cross, GridValue.naught,
-        GridValue.cross, GridValue.none, GridValue.naught
+        GridValue.white, GridValue.none, GridValue.black,
+        GridValue.none, GridValue.black, GridValue.white,
+        GridValue.black, GridValue.none, GridValue.white
       ]
       win = board.hasPlayerWon(player, grid)
       (gameOver, winner) = board.isGameOver(grid, board.getAvailablePositions(grid))
@@ -146,9 +146,9 @@ suite "Board tests":
   test "Full board and no winner":
     let
       grid = @[
-        GridValue.cross, GridValue.cross, GridValue.naught,
-        GridValue.naught, GridValue.naught, GridValue.cross,
-        GridValue.cross, GridValue.naught, GridValue.cross
+        GridValue.black, GridValue.black, GridValue.white,
+        GridValue.white, GridValue.white, GridValue.black,
+        GridValue.black, GridValue.white, GridValue.black
       ]
       (gameOver, winner) = board.isGameOver(grid, board.getAvailablePositions(grid))
 
@@ -165,25 +165,25 @@ suite "Board tests":
       beta = high(BiggestInt)
       depth = 0
       grid = @[
-        GridValue.cross, GridValue.none, GridValue.none,
-        GridValue.cross, GridValue.none, GridValue.none,
-        GridValue.none, GridValue.none, GridValue.naught
+        GridValue.black, GridValue.none, GridValue.none,
+        GridValue.black, GridValue.none, GridValue.none,
+        GridValue.none, GridValue.none, GridValue.white
       ]
     board.grid = grid
     board.availablePositions = board.getAvailablePositions(grid)
-    let position = board.minimax(GridValue.naught, grid, depth, alpha, beta)
+    let position = board.minimax(GridValue.white, grid, depth, alpha, beta)
     check position.i == 6
 
   test "Get best move: minimise loss":
     let
       grid = @[
-        GridValue.cross, GridValue.none, GridValue.none,
-        GridValue.cross, GridValue.none, GridValue.none,
-        GridValue.none, GridValue.none, GridValue.naught
+        GridValue.black, GridValue.none, GridValue.none,
+        GridValue.black, GridValue.none, GridValue.none,
+        GridValue.none, GridValue.none, GridValue.white
       ]
     board.grid = grid
     board.availablePositions = board.getAvailablePositions(grid)
-    let position = board.getBestMove(GridValue.naught)
+    let position = board.getBestMove(GridValue.white)
     check position.i == 6
 
   test "Minimax: maximise win":
@@ -192,23 +192,23 @@ suite "Board tests":
       beta = high(BiggestInt)
       depth = 0
       grid = @[
-        GridValue.naught, GridValue.cross, GridValue.none,
-        GridValue.naught, GridValue.cross, GridValue.none,
-        GridValue.none, GridValue.none, GridValue.cross
+        GridValue.white, GridValue.black, GridValue.none,
+        GridValue.white, GridValue.black, GridValue.none,
+        GridValue.none, GridValue.none, GridValue.black
       ]
     board.grid = grid
     board.availablePositions = board.getAvailablePositions(grid)
-    let position = board.minimax(GridValue.naught, grid, depth, alpha, beta)
+    let position = board.minimax(GridValue.white, grid, depth, alpha, beta)
     check position.i == 6
 
   test "Get best move: maximise win":
     let
       grid = @[
-        GridValue.naught, GridValue.cross, GridValue.none,
-        GridValue.naught, GridValue.cross, GridValue.none,
-        GridValue.none, GridValue.none, GridValue.cross
+        GridValue.white, GridValue.black, GridValue.none,
+        GridValue.white, GridValue.black, GridValue.none,
+        GridValue.none, GridValue.none, GridValue.black
       ]
     board.grid = grid
     board.availablePositions = board.getAvailablePositions(grid)
-    let position = board.getBestMove(GridValue.naught)
+    let position = board.getBestMove(GridValue.white)
     check position.i == 6
