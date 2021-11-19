@@ -10,7 +10,7 @@ Compile a release executable: `nimble release`
 
 ## TODO
  - [ ] Refactor tictactoe code to checkers
-  - [ ] Implement new grid in GUI
-  - [ ] Implement checkers rules
-  - [ ] Update rules page
+    - [ ] Implement new grid in GUI
+    - [ ] Implement checkers rules
+    - [ ] Update rules page
  - [ ] Write new tests
