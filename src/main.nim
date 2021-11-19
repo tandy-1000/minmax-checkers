@@ -13,6 +13,7 @@ proc gameInit*() =
   loadFont(0, "font.png")
 
 proc gameDraw*() =
+  c.started = true
   if not c.started:
     c.drawStartPage()
     c.drawHelpButton()
@@ -20,15 +21,19 @@ proc gameDraw*() =
   else:
     cls()
     setColor(7)
-    printc("Tic Tac Toe", screenWidth div 2, 8)
+    printc("CHECKERS", screenWidth div 2, 8)
 
+    var color: int
     for i, square in enumerate(c.gridBounds):
-      setColor(i+1)
+      inc color
+      if color == 15: color = 0
+      setColor(color + 1)
+
       rect(square.x, square.y, square.x1, square.y1)
       c.drawPiece(c.board.grid[i], square)
 
-    c.drawHelpButton()
-    c.displayClues()
+    # c.drawHelpButton()
+    # c.displayClues()
 
     if c.outOfBounds:
       setColor(4)
@@ -60,14 +65,14 @@ proc gameUpdate*(dt: float32) =
       elif c.isInBounds(pos, newSquare(79, 44, 101, 56)):
         c.board.difficulty = Difficulty.hard
       elif c.isInBounds(pos, newSquare(52, 74, 64, 86)):
-        c.board.human = GridValue.naught
-        c.board.humanPotential = GridValue.pNaught
-        c.board.ai = GridValue.cross
+        c.board.human = GridValue.white
+        c.board.humanPotential = GridValue.pWhite
+        c.board.ai = GridValue.black
         c.board.turn = c.board.human
       elif c.isInBounds(pos, newSquare(64, 74, 76, 86)):
-        c.board.human = GridValue.cross
-        c.board.humanPotential = GridValue.pCross
-        c.board.ai = GridValue.naught
+        c.board.human = GridValue.black
+        c.board.humanPotential = GridValue.pBlack
+        c.board.ai = GridValue.white
         c.board.turn = c.board.human
       elif c.isInBounds(pos, newSquare(52, 102, 76, 114)):
         c.started = true
@@ -83,7 +88,7 @@ proc gameUpdate*(dt: float32) =
         let
           x = (pos[0] - c.offset) div c.size
           y = (pos[1] - c.offset) div c.size
-          i = xyIndex(x, y)
+          i = c.board.xyIndex(x, y)
         if c.board.grid[i] == GridValue.none:
           c.board.grid[i] = c.board.humanPotential
 
@@ -92,7 +97,7 @@ proc gameUpdate*(dt: float32) =
         pos = mouse()
         if c.isOutOfBounds(pos, c.gridSquare):
           if c.isInBounds(pos, newSquare(118, 118, 125, 125)):
-            c.showClues = not c.showClues
+            # c.showClues = not c.showClues
             c.outOfBounds = false
           else:
             c.outOfBounds = true
@@ -100,7 +105,7 @@ proc gameUpdate*(dt: float32) =
           let
             x = (pos[0] - c.offset) div c.size
             y = (pos[1] - c.offset) div c.size
-            i = xyIndex(x, y)
+            i = c.board.xyIndex(x, y)
           c.successfulMove = c.board.placePiece(newPosition(i), c.board.human)
           if c.successfulMove:
             c.board.turn = c.board.ai

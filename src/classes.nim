@@ -4,7 +4,7 @@ import pkg/[nico, oolib]
 
 type
   GridValue* = enum
-    none = " ", naught, pNaught, cNaught = "O", cross, pCross, cCross = "X"
+    none = " ", white, pWhite, cWhite = "O", black, pBlack, cBlack = "X"
   Difficulty* = enum
     easy = 6, medium = 7, hard = 8, impossible = 9
 
@@ -26,8 +26,6 @@ func `==`*(a, b: Position): bool = system.`==`(a, b) or (a.i == b.i)
 func `>`*(a, b: Position): bool = system.`>`(a.score, b.score)
 func `<`*(a, b: Position): bool = system.`<`(a.score, b.score)
 
-## func for converting 2D array coordinates to a 1D array index
-func xyIndex*(x, y: int, dimension: int = 3): int = y * dimension + x
 
 
 proc debugPrint*(position: Position): string =
@@ -37,7 +35,7 @@ proc debugPrint*(position: Position): string =
 proc debugGrid*(grid: seq[GridValue]): string =
   for y in 0 ..< 3:
     for x in 0 ..< 3:
-      result.add $grid[xyIndex(x, y)] & " "
+      result.add $grid[y * 8 + x] & " "
     result.add "\n"
 
 proc debug*(positions: seq[Position]): string =
@@ -52,10 +50,10 @@ class pub Board:
     availablePositions*: seq[Position]
     gameOver* = false
     gameResult* = GridValue.none
-    ai* = GridValue.naught
-    human* = GridValue.cross
-    humanPotential* = GridValue.pCross
-    turn* = GridValue.cross
+    ai* = GridValue.white
+    human* = GridValue.black
+    humanPotential* = GridValue.pBlack
+    turn* = GridValue.black
     difficulty*: Difficulty
 
   proc `new`(difficulty: Difficulty, dimension: int = 8): Board =
@@ -75,7 +73,7 @@ class pub Board:
 
   proc cleanGrid* =
     for i in 0 ..< self.grid.len:
-      if self.grid[i] in {GridValue.pNaught, GridValue.pCross}:
+      if self.grid[i] in {GridValue.pWhite, GridValue.pBlack}:
         self.grid[i] = GridValue.none
 
   proc getAvailablePositions*(grid: seq[GridValue]): seq[Position] =
@@ -83,7 +81,7 @@ class pub Board:
       ind = -1
       pos: Position
     for i in 0 ..< grid.len:
-      if grid[i] in {GridValue.none, GridValue.pNaught, GridValue.pCross}:
+      if grid[i] in {GridValue.none, GridValue.pWhite, GridValue.pBlack}:
         pos = newPosition(i)
         ind = self.find(pos, result)
         if ind >= 0:
@@ -93,7 +91,7 @@ class pub Board:
 
   proc placePiece*(pos: Position, player: GridValue): bool =
     var ind = -1
-    if self.grid[pos.i] in {GridValue.none, GridValue.pNaught, GridValue.pCross}:
+    if self.grid[pos.i] in {GridValue.none, GridValue.pWhite, GridValue.pBlack}:
       self.grid[pos.i] = player
       ind = self.find(pos, self.availablePositions)
       if ind >= 0:
@@ -101,6 +99,9 @@ class pub Board:
       return true
     else:
       return false
+
+  ## func for converting 2D array coordinates to a 1D array index
+  proc xyIndex*(x, y: int): int = y * self.dimension + x
 
   proc hasPlayerWon*(player: GridValue, grid: seq[GridValue]): bool =
     ## assertions for diagonal wins
@@ -113,8 +114,8 @@ class pub Board:
     var rowWin, columnWin: bool
     for i in 0 ..< self.dimension:
       ## assertions for each row / column win
-      rowWin = grid[xyIndex(0, i)] == player and grid[xyIndex(1, i)] == player and grid[xyIndex(2, i)] == player
-      columnWin = grid[xyIndex(i, 0)] == player and grid[xyIndex(i, 1)] == player and grid[xyIndex(i, 2)] == player
+      rowWin = grid[self.xyIndex(0, i)] == player and grid[self.xyIndex(1, i)] == player and grid[self.xyIndex(2, i)] == player
+      columnWin = grid[self.xyIndex(i, 0)] == player and grid[self.xyIndex(i, 1)] == player and grid[self.xyIndex(i, 2)] == player
       if rowWin or columnWin:
         result = true
 
@@ -127,23 +128,23 @@ class pub Board:
       winner = GridValue.none
       gameOver = availablePositions.len == 0
 
-    for player in {GridValue.cross, GridValue.naught}:
+    for player in {GridValue.black, GridValue.white}:
       if self.hasPlayerWon(player, grid):
         winner = player
         gameOver = true
     result = (gameOver, winner)
 
   proc getClueValue*(player: GridValue): GridValue =
-    if player == GridValue.cross:
-      return GridValue.cCross
-    elif player == GridValue.naught:
-      return GridValue.cNaught
+    if player == GridValue.black:
+      return GridValue.cBlack
+    elif player == GridValue.white:
+      return GridValue.cWhite
 
   proc opposingPlayer*(player: GridValue): GridValue =
-    if player == GridValue.cross:
-      return GridValue.naught
-    elif player == GridValue.naught:
-      return GridValue.cross
+    if player == GridValue.black:
+      return GridValue.white
+    elif player == GridValue.white:
+      return GridValue.black
 
   proc minimax*(
     player: GridValue,
@@ -295,7 +296,7 @@ class pub Checkers:
       rect(hCenter + d + 3, diffRowY - r, hCenter + (3*d) + 1, diffRowY + r)
 
     setColor(7)
-    if self.board.human == GridValue.naught:
+    if self.board.human == GridValue.white:
       rectfill(hCenter - d, playerRowY - r, hCenter, playerRowY + r)
       setColor(0)
     else:
@@ -303,7 +304,7 @@ class pub Checkers:
     printc("O", hCenter - r + 1, playerRowY - 2)
 
     setColor(7)
-    if self.board.human == GridValue.cross:
+    if self.board.human == GridValue.black:
       rectfill(hCenter, playerRowY - r, hCenter + d, playerRowY + r)
       setColor(0)
     else:
@@ -311,7 +312,7 @@ class pub Checkers:
     printc("X", hCenter + r + 1, playerRowY - 2)
 
     setColor(7)
-    printc("Tic Tac Toe", hCenter, padding)
+    printc("CHECKERS", hCenter, padding)
     printc("easy", hCenter - (2*d) - 1, diffRowY - 3)
     printc("medium", hCenter + 1, diffRowY - 3)
     printc("hard", hCenter + (2*d) + 3, diffRowY - 3)
@@ -332,17 +333,17 @@ class pub Checkers:
       x1 = gridBound.x1 - offset
       y1 = gridBound.y1 - offset
     setColor(7)
-    if val in {GridValue.cross, GridValue.pCross, GridValue.cCross}:
-      if val == GridValue.pCross:
+    if val in {GridValue.black, GridValue.pBlack, GridValue.cBlack}:
+      if val == GridValue.pBlack:
         setColor(5)
-      elif val == GridValue.cCross:
+      elif val == GridValue.cBlack:
         setColor(3)
       line(x, y, x1, y1)
       line(x1, y, x, y1)
-    elif val in {GridValue.naught, GridValue.pNaught, GridValue.cNaught}:
-      if val == GridValue.pNaught:
+    elif val in {GridValue.white, GridValue.pWhite, GridValue.cWhite}:
+      if val == GridValue.pWhite:
         setColor(5)
-      elif val == GridValue.cNaught:
+      elif val == GridValue.cWhite:
         setColor(3)
       let
         x2 = (x1 + x) div 2
@@ -369,7 +370,7 @@ class pub Checkers:
       rect(14, 16, 114, 112)
       printc("Rules:", screenWidth div 2, 26)
       printc("You may make a move", screenWidth div 2, 40)
-      printc("where naught hasn't.", screenWidth div 2, 48)
+      printc("where white hasn't.", screenWidth div 2, 48)
       printc("You win if you can get", screenWidth div 2, 64)
       printc("three of your symbols", screenWidth div 2, 72)
       printc("in a row, horizontally,", (screenWidth div 2) + 2, 80)
