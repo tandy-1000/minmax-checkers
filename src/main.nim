@@ -91,7 +91,7 @@ proc gameUpdate*(dt: float32) =
           x = (pos[0] - c.offset) div c.size
           y = (pos[1] - c.offset) div c.size
           i = c.board.xyIndex(x, y)
-        if c.board.grid[i] == GridValue.none:
+        if c.board.grid[i] == GridValue.dark:
           c.board.grid[i] = c.board.humanPotential
 
       pressed = mousebtnp(0)
