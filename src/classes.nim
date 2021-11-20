@@ -4,7 +4,7 @@ import pkg/[nico, oolib]
 
 type
   GridValue* = enum
-    none = " ", white, pWhite, cWhite = "O", black, pBlack, cBlack = "X"
+    none, dark, light = " ", white, pWhite, cWhite = "O", black, pBlack, cBlack = "X"
   Difficulty* = enum
     easy = 6, medium = 7, hard = 8, impossible = 9
 
@@ -59,9 +59,18 @@ class pub Board:
   proc `new`(difficulty: Difficulty, dimension: int = 8): Board =
     self.dimension = dimension
     self.difficulty = difficulty
-    for i in 0 ..< self.dimension * self.dimension:
-      self.grid.add GridValue.none
-      self.availablePositions.add newPosition(i)
+    for row in 0 ..< self.dimension:
+      for col in 0 ..< self.dimension:
+        if (row mod 2 == 0 and col mod 2 == 0) or (row mod 2 != 0 and col mod 2 != 0):
+          self.grid.add GridValue.light
+        else:
+          if row >= 0 and row <= 1:
+            self.grid.add human
+          elif row >= 6 and row <= 7:
+            self.grid.add ai
+          else:
+            self.grid.add GridValue.dark
+            self.availablePositions.add newPosition(row * self.dimension + col)
 
   proc find*(pos: Position, positions: seq[Position]): int =
     ## Find a Position object in a sequence of Positions
@@ -74,14 +83,14 @@ class pub Board:
   proc cleanGrid* =
     for i in 0 ..< self.grid.len:
       if self.grid[i] in {GridValue.pWhite, GridValue.pBlack}:
-        self.grid[i] = GridValue.none
+        self.grid[i] = GridValue.dark
 
   proc getAvailablePositions*(grid: seq[GridValue]): seq[Position] =
     var
       ind = -1
       pos: Position
     for i in 0 ..< grid.len:
-      if grid[i] in {GridValue.none, GridValue.pWhite, GridValue.pBlack}:
+      if grid[i] in {GridValue.dark, GridValue.pWhite, GridValue.pBlack}:
         pos = newPosition(i)
         ind = self.find(pos, result)
         if ind >= 0:
@@ -91,7 +100,7 @@ class pub Board:
 
   proc placePiece*(pos: Position, player: GridValue): bool =
     var ind = -1
-    if self.grid[pos.i] in {GridValue.none, GridValue.pWhite, GridValue.pBlack}:
+    if self.grid[pos.i] in {GridValue.dark, GridValue.pWhite, GridValue.pBlack}:
       self.grid[pos.i] = player
       ind = self.find(pos, self.availablePositions)
       if ind >= 0:
@@ -100,7 +109,7 @@ class pub Board:
     else:
       return false
 
-  ## func for converting 2D array coordinates to a 1D array index
+  ## proc for converting 2D array coordinates to a 1D array index
   proc xyIndex*(x, y: int): int = y * self.dimension + x
 
   proc hasPlayerWon*(player: GridValue, grid: seq[GridValue]): bool =
@@ -332,24 +341,25 @@ class pub Checkers:
       y = gridBound.y + offset
       x1 = gridBound.x1 - offset
       y1 = gridBound.y1 - offset
+      x2 = (x1 + x) div 2
+      y2 = (y1 + y) div 2
+      r = (x1 - x) div 2
     setColor(7)
+
     if val in {GridValue.black, GridValue.pBlack, GridValue.cBlack}:
       if val == GridValue.pBlack:
         setColor(5)
       elif val == GridValue.cBlack:
         setColor(3)
-      line(x, y, x1, y1)
-      line(x1, y, x, y1)
+      circfill(x2, y2, r)
+      setColor(0)
+      circfill(x2, y2, r-1)
     elif val in {GridValue.white, GridValue.pWhite, GridValue.cWhite}:
       if val == GridValue.pWhite:
         setColor(5)
       elif val == GridValue.cWhite:
         setColor(3)
-      let
-        x2 = (x1 + x) div 2
-        y2 = (y1 + y) div 2
-        r = (x1 - x) div 2
-      circ(x2, y2, r)
+      circfill(x2, y2, r)
 
   proc drawHelpButton* =
     setColor(7)

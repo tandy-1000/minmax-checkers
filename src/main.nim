@@ -28,8 +28,10 @@ proc gameDraw*() =
       inc color
       if color == 15: color = 0
       setColor(color + 1)
-
-      rect(square.x, square.y, square.x1, square.y1)
+      if c.board.grid[i] == GridValue.light:
+        rectfill(square.x, square.y, square.x1, square.y1)
+      else:
+        rect(square.x, square.y, square.x1, square.y1)
       c.drawPiece(c.board.grid[i], square)
 
     # c.drawHelpButton()
