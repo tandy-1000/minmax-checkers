@@ -23,14 +23,17 @@ proc gameDraw*() =
     setColor(7)
     printc("CHECKERS", screenWidth div 2, 8)
 
-    var color: int
+    var color = 1
     for i, square in enumerate(c.gridBounds):
-      inc color
-      if color == 15: color = 0
-      setColor(color + 1)
+      if color == 15: color = 1
       if c.board.grid[i] == GridValue.light:
+        setColor(color)
         rectfill(square.x, square.y, square.x1, square.y1)
+        setColor(7)
+        rect(square.x, square.y, square.x1, square.y1)
+        inc color
       else:
+        setColor(7)
         rect(square.x, square.y, square.x1, square.y1)
       c.drawPiece(c.board.grid[i], square)
 
@@ -117,7 +120,5 @@ proc gameUpdate*(dt: float32) =
         c.board.turn = c.board.human
 
 nico.init(orgName, appName)
-fixedSize(true)
-integerScale(true)
 nico.createWindow(appName, 256, 256, 4, false)
 nico.run(gameInit, gameUpdate, gameDraw)
