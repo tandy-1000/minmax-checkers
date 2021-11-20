@@ -4,9 +4,12 @@ import pkg/[nico, oolib]
 
 type
   GridValue* = enum
-    none, dark, light = " ", white, pWhite, cWhite = "O", black, pBlack, cBlack = "X"
+    none, dark, light,
+    white, whiteKing, pWhite, cWhite,
+    black, blackKing, pBlack, cBlack
   Difficulty* = enum
     easy = 6, medium = 7, hard = 8, impossible = 9
+
 
 class pub Position:
   var
@@ -53,6 +56,10 @@ class pub Board:
     ai* = GridValue.white
     human* = GridValue.black
     humanPotential* = GridValue.pBlack
+    humanPieces* = 12
+    aiPieces* = 12
+    humanKings* = 0
+    aiKings* = 0
     turn* = GridValue.black
     difficulty*: Difficulty
 
@@ -71,6 +78,8 @@ class pub Board:
           else:
             self.grid.add GridValue.dark
             self.availablePositions.add newPosition(row * self.dimension + col)
+
+  proc score*: int = self.humanPieces - self.aiPieces + (self.humanKings div 2 - self.aiKings div 2)
 
   proc find*(pos: Position, positions: seq[Position]): int =
     ## Find a Position object in a sequence of Positions
@@ -344,9 +353,9 @@ class pub Checkers:
       x2 = (x1 + x) div 2
       y2 = (y1 + y) div 2
       r = (x1 - x) div 2
-    setColor(7)
 
-    if val in {GridValue.black, GridValue.pBlack, GridValue.cBlack}:
+    setColor(7)
+    if val in {GridValue.black, GridValue.blackKing, GridValue.pBlack, GridValue.cBlack}:
       if val == GridValue.pBlack:
         setColor(5)
       elif val == GridValue.cBlack:
@@ -354,12 +363,18 @@ class pub Checkers:
       circfill(x2, y2, r)
       setColor(0)
       circfill(x2, y2, r-1)
-    elif val in {GridValue.white, GridValue.pWhite, GridValue.cWhite}:
+      if val == GridValue.blackKing:
+        setColor(7)
+        printc("K", x2+1, y2-2)
+    elif val in {GridValue.white, GridValue.whiteKing, GridValue.pWhite, GridValue.cWhite}:
       if val == GridValue.pWhite:
         setColor(5)
       elif val == GridValue.cWhite:
         setColor(3)
       circfill(x2, y2, r)
+      if val == GridValue.whiteKing:
+        setColor(0)
+        printc("K", x2+1, y2-2)
 
   proc drawHelpButton* =
     setColor(7)
