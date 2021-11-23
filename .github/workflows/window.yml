@@ -1,0 +1,56 @@
+name: Windows build
+on:
+  push:
+    paths:
+      - ".github/workflows/*"
+      - "src/*"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: [devel]
+
+    name: 'Nim ${{ matrix.branch }}'
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        working-directory: minmax-checkers
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.4.0
+        with:
+          path: minmax-checkers
+
+      - name: Setup mingw
+        uses: egor-tensin/setup-mingw@v1
+
+      - name: Setup Nim
+        uses: alaviss/setup-nim@0.1.1
+        with:
+          path: nim
+          version: ${{ matrix.branch }}
+
+      - name: Get SDL
+        run: nimble deps
+
+      - name: Install dependencies
+        run: nimble install -y --depsOnly
+
+      - name: Compile release build
+        run: nimble release
+
+      - name: Create release zip
+        run: Compress-Archive -Path checkers.exe,SDL2.dll -DestinationPath checkers.zip
+
+      - name: Upload release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: D:\a\minmax-checkers\minmax-checkers\minmax-checkers\checkers.zip
+          tag: ${{ github.ref }}
+          overwrite: true
+          body: "Windows Build"
