@@ -87,6 +87,12 @@ class pub Move:
     score*: BiggestInt = 0
     depth*: int = 0
 
+  proc isLegal*(dimension: int = 8): bool =
+    if (self.x1 >= 0 and self.x1 < dimension) and (self.y1 >= 0 and self.y1 <   dimension):
+      return true
+    else:
+      return false
+
 
 # func for checking equality between Moves
 func `==`*(a, b: Move): bool =
@@ -150,9 +156,9 @@ class pub Board:
           self.grid[x].add newGridSquare(GridColor.light)
         else:
           if x >= 0 and x < populate:
-            self.grid[x].add newGridSquare(GridColor.dark, some newPiece(color = self.human))
-          elif x >= self.dimension - populate and x < self.dimension:
             self.grid[x].add newGridSquare(GridColor.dark, some newPiece(color = self.ai))
+          elif x >= self.dimension - populate and x < self.dimension:
+            self.grid[x].add newGridSquare(GridColor.dark, some newPiece(color = self.human))
           else:
             self.grid[x].add newGridSquare(GridColor.dark)
 
@@ -185,46 +191,50 @@ class pub Board:
     let
       x1 = move.x1 + (move.x1 - move.x)
       y1 = move.y1 + (move.y1 - move.y)
+      capture = newMove(move.x, move.y, x1, y1, jump = true)
 
-    if (x1 >= 0 and x1 < self.dimension) and (y1 >= 0 and y1 < self.dimension):
-      if self.grid[x1][y1].piece == none(Piece):
+    if capture.isLegal(dimension = self.dimension):
+      if self.grid[x1][y1].piece == none(Piece) and self.grid[move.x1][move.y1].piece.isSome():
         if self.grid[move.x1][move.y1].piece.get().color != self.grid[move.x][move.y].piece.get().color:
-          return some newMove(move.x, move.y, x1, y1, jump = true)
+          return some capture
 
   proc getMoves*(x, y: int): seq[Move] =
     ## Returns a sequence of Move objects for a given coordinate, including captures
 
-    if self.grid[x][y].piece != none(Piece):
+    if self.grid[x][y].piece.isSome():
       var move: Move
       if self.grid[x][y].piece.get().color == self.human and self.grid[x][y].piece.get().king == false:
         for direction in {Direction.northEast, Direction.northWest}:
           move = self.nextSquare(x, y, direction)
-          if self.grid[move.x1][move.y1].piece == none(Piece):
-            result.add move
-          else:
-            let capture = self.getCapture(move)
-            if capture.isSome():
-              result.add capture.get()
+          if move.isLegal(dimension = self.dimension):
+            if self.grid[move.x1][move.y1].piece.isSome():
+              let capture = self.getCapture(move)
+              if capture.isSome():
+                result.add capture.get()
+            else:
+              result.add move
       elif self.grid[x][y].piece.get().color == self.ai and self.grid[x][y].piece.get().king == false:
         for direction in {Direction.southEast, Direction.southWest}:
           move = self.nextSquare(x, y, direction)
-          if self.grid[move.x1][move.y1].piece == none(Piece):
-            result.add move
-          else:
-            let capture = self.getCapture(move)
-            if capture.isSome():
-              result.add capture.get()
+          if move.isLegal(dimension = self.dimension):
+            if self.grid[move.x1][move.y1].piece.isSome():
+              let capture = self.getCapture(move)
+              if capture.isSome():
+                result.add capture.get()
+            else:
+              result.add move
       else:
         for direction in {Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest}:
           move = self.nextSquare(x, y, direction)
-          if self.grid[move.x1][move.y1].piece == none(Piece):
-            result.add move
-          else:
-            let capture = self.getCapture(move)
-            if capture.isSome():
-              result.add capture.get()
+          if move.isLegal(dimension = self.dimension):
+            if self.grid[move.x1][move.y1].piece.isSome():
+              let capture = self.getCapture(move)
+              if capture.isSome():
+                result.add capture.get()
+            else:
+              result.add move
     else:
-      result = @[]
+      return @[]
 
   proc cleanGrid* =
     for x in 0 ..< self.dimension:
@@ -236,7 +246,7 @@ class pub Board:
     self.grid[move.x1][move.y1].piece = self.grid[move.x][move.y].piece
     self.grid[move.x][move.y].piece = none(Piece)
     if self.grid[move.x1][move.y1].piece.isSome():
-      if self.grid[move.x1][move.y1].piece.get().color == self.human and move.x1 == (self.dimension * 2) - 1 or self.grid[move.x1][move.y1].piece.get().color == self.ai and move.x1 == 0:
+      if self.grid[move.x1][move.y1].piece.get().color == self.human and move.x1 == 0 or self.grid[move.x1][move.y1].piece.get().color == self.ai and move.x1 == self.dimension - 1:
         self.grid[move.x1][move.y1].piece.get().makeKing()
     if move.jump:
       let
