@@ -11,9 +11,8 @@ Compile a release executable: `nimble release`
 ## TODO
  - [ ] Refactor tictactoe code to checkers
     - [x] Implement new grid in GUI
-    - [ ] Fix hover on potential moves
-       - [x] Only on black squares
-       - [ ] Correctly get available moves
-    - [ ] Implement checkers rules
+    - [x] Implement `getMoves` for coordinate including captures
+    - [ ] Implement scoring / game result functions
     - [ ] Update rules page
  - [ ] Write new tests
+ - [ ] Implement difficulty by throwing in random moves every now and then
