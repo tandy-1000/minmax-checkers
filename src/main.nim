@@ -1,4 +1,4 @@
-import std/[random, enumerate]
+import std/[random, enumerate, options]
 import pkg/nico
 import classes
 
@@ -23,19 +23,23 @@ proc gameDraw*() =
     setColor(7)
     printc("CHECKERS", screenWidth div 2, 8)
 
-    var color = 1
-    for i, square in enumerate(c.gridBounds):
-      if color == 15: color = 1
-      if c.board.grid[i] == GridValue.light:
-        setColor(color)
-        rectfill(square.x, square.y, square.x1, square.y1)
-        setColor(7)
-        rect(square.x, square.y, square.x1, square.y1)
-        inc color
-      else:
-        setColor(7)
-        rect(square.x, square.y, square.x1, square.y1)
-      c.drawPiece(c.board.grid[i], square)
+    var
+      color = 1
+      square: Square
+    for row in 0 ..< c.board.dimension:
+      for col in 0 ..< c.board.dimension:
+        if color == 15: color = 1
+        square = c.gridBounds[row][col]
+        if c.board.grid[row][col].color == GridColor.light:
+          setColor(color)
+          rectfill(square.x, square.y, square.x1, square.y1)
+          setColor(7)
+          rect(square.x, square.y, square.x1, square.y1)
+          inc color
+        else:
+          setColor(7)
+          rect(square.x, square.y, square.x1, square.y1)
+        get(c.board.grid[row][col].val).draw(square)
 
     # c.drawHelpButton()
     # c.displayClues()
@@ -70,14 +74,12 @@ proc gameUpdate*(dt: float32) =
       elif c.isInBounds(pos, newSquare(79, 44, 101, 56)):
         c.board.difficulty = Difficulty.hard
       elif c.isInBounds(pos, newSquare(52, 74, 64, 86)):
-        c.board.human = GridValue.white
-        c.board.humanPotential = GridValue.pWhite
-        c.board.ai = GridValue.black
+        c.board.human = PieceColor.white
+        c.board.ai = PieceColor.black
         c.board.turn = c.board.human
       elif c.isInBounds(pos, newSquare(64, 74, 76, 86)):
-        c.board.human = GridValue.black
-        c.board.humanPotential = GridValue.pBlack
-        c.board.ai = GridValue.white
+        c.board.human = PieceColor.black
+        c.board.ai = PieceColor.white
         c.board.turn = c.board.human
       elif c.isInBounds(pos, newSquare(52, 102, 76, 114)):
         c.started = true
@@ -90,12 +92,9 @@ proc gameUpdate*(dt: float32) =
     if c.board.turn == c.board.human and c.board.gameOver == false:
       pos = mouse()
       if not c.isOutOfBounds(pos, c.gridSquare):
-        let
-          x = (pos[0] - c.offset) div c.size
-          y = (pos[1] - c.offset) div c.size
-          i = c.board.xyIndex(x, y)
-        if c.board.grid[i] == GridValue.dark:
-          c.board.grid[i] = c.board.humanPotential
+        let i = c.xySquare(pos[0], pos[1])
+        if c.board.grid[i].color == GridColor.dark:
+          c.board.grid[i].val = newPiece(c.board.human, i, potential = true)
 
       pressed = mousebtnp(0)
       if pressed:
@@ -107,10 +106,7 @@ proc gameUpdate*(dt: float32) =
           else:
             c.outOfBounds = true
         else:
-          let
-            x = (pos[0] - c.offset) div c.size
-            y = (pos[1] - c.offset) div c.size
-            i = c.board.xyIndex(x, y)
+          let i = c.xySquare(pos[0], pos[1])
           c.successfulMove = c.board.placePiece(newPosition(i), c.board.human)
           if c.successfulMove:
             c.board.turn = c.board.ai
