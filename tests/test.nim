@@ -35,20 +35,16 @@ suite "Board":
     check board.grid == grid
 
   test "Get next North East square":
-    let nextSquare = board.nextSquare(3, 0, Direction.northEast)
-    check nextSquare == newMove(3, 0, 2, 1)
+    check board.nextSquare(3, 0, Direction.northEast) == newMove(3, 0, 2, 1)
 
   test "Get next North West square":
-    let nextSquare = board.nextSquare(2, 3, Direction.northWest)
-    check nextSquare == newMove(2, 3, 1, 2)
+    check board.nextSquare(2, 3, Direction.northWest) == newMove(2, 3, 1, 2)
 
   test "Get next South East square":
-    let nextSquare = board.nextSquare(1, 0, Direction.southEast)
-    check nextSquare == newMove(1, 0, 2, 1)
+    check board.nextSquare(1, 0, Direction.southEast) == newMove(1, 0, 2, 1)
 
   test "Get next South West square":
-    let nextSquare = board.nextSquare(0, 1, Direction.southWest)
-    check nextSquare == newMove(0, 1, 1, 0)
+    check board.nextSquare(0, 1, Direction.southWest) == newMove(0, 1, 1, 0)
 
   test "Make move":
     let
@@ -113,13 +109,23 @@ suite "Board":
     check board.grid == grid and capture == newMove(2, 1, 0, 3)
 
   test "Get moves (king)":
-    let moves = board.getMoves(0, 3)
-    check moves == @[newMove(0, 3, 1, 2)]
+    check board.getMoves(0, 3) == @[newMove(0, 3, 1, 2)]
 
   test "Get moves (top, white)":
-    let moves = board.getMoves(0, 1)
-    check moves == @[newMove(0, 1, 1, 2), newMove(0, 1, 1, 0)]
+    check board.getMoves(0, 1) == @[newMove(0, 1, 1, 2), newMove(0, 1, 1, 0)]
 
   test "Get moves (bottom, black":
-    let moves = board.getMoves(3, 2)
-    check moves == @[newMove(3, 2, 2, 3), newMove(3, 2, 2, 1)]
+    check board.getMoves(3, 2) == @[newMove(3, 2, 2, 3), newMove(3, 2, 2, 1)]
+
+  test "Get player pieces (ai & human)":
+    let
+      humanPieces = board.getPlayerPieces(board.human)
+      aiPieces = board.getPlayerPieces(board.ai)
+    check humanPieces == @[(0, 3), (3, 2)] and aiPieces == @[(0, 1)]
+
+  test "Get player moves (ai)":
+    check board.getPlayerMoves(board.ai) == @[newMove(0, 1, 1, 2), newMove(0, 1, 1, 0)]
+
+  test "Get player moves (human)":
+    let assertion = board.getPlayerMoves(board.human) == @[newMove(0, 3, 1, 2), newMove(3, 2, 2, 3), newMove(3, 2, 2, 1)]
+    check assertion
