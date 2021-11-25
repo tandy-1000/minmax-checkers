@@ -189,7 +189,7 @@ class pub Board:
 
     return newMove(x, y, x1, y1)
 
-  proc getCapture*(move: Move): Option[Move] =
+  proc getCapture*(move: Move, grid: seq[seq[GridSquare]]): Option[Move] =
     ## Returns a `Move` object if a capture is possible.
 
     let
@@ -198,17 +198,17 @@ class pub Board:
       capture = newMove(move.x, move.y, x1, y1, jump = true)
 
     if capture.isLegal(dimension = self.dimension):
-      if self.grid[x1][y1].piece == none(Piece) and self.grid[move.x1][move.y1].piece.isSome():
-        if self.grid[move.x1][move.y1].piece.get().color != self.grid[move.x][move.y].piece.get().color:
+      if grid[x1][y1].piece == none(Piece) and grid[move.x1][move.y1].piece.isSome():
+        if grid[move.x1][move.y1].piece.get().color != grid[move.x][move.y].piece.get().color:
           return some capture
 
-  proc getMove*(x, y: int, direction: Direction): Option[Move] =
+  proc getMove*(x, y: int, direction: Direction, grid: seq[seq[GridSquare]]): Option[Move] =
     ## Returns a `Move` object given a coordinate and a `Direction`
 
     let move = self.nextSquare(x, y, direction)
     if move.isLegal(dimension = self.dimension):
-      if self.grid[move.x1][move.y1].piece.isSome():
-        let capture = self.getCapture(move)
+      if grid[move.x1][move.y1].piece.isSome():
+        let capture = self.getCapture(move, grid)
         if capture.isSome():
           return capture
       else:
@@ -216,42 +216,42 @@ class pub Board:
     else:
       return none Move
 
-  proc getMoves*(x, y: int): seq[Move] =
+  proc getMoves*(x, y: int, grid: seq[seq[GridSquare]]): seq[Move] =
     ## Returns a sequence of `Move` objects for a given coordinate, including captures
 
-    if self.grid[x][y].piece.isSome():
+    if grid[x][y].piece.isSome():
       var move: Option[Move]
-      if self.grid[x][y].piece.get().color == self.human and self.grid[x][y].piece.get().king == false:
+      if grid[x][y].piece.get().color == self.human and grid[x][y].piece.get().king == false:
         for direction in {Direction.northEast, Direction.northWest}:
-          move = self.getMove(x, y, direction)
+          move = self.getMove(x, y, direction, grid)
           if move.isSome():
             result.add move.get()
-      elif self.grid[x][y].piece.get().color == self.ai and self.grid[x][y].piece.get().king == false:
+      elif grid[x][y].piece.get().color == self.ai and grid[x][y].piece.get().king == false:
         for direction in {Direction.southEast, Direction.southWest}:
-          move = self.getMove(x, y, direction)
+          move = self.getMove(x, y, direction, grid)
           if move.isSome():
             result.add move.get()
       else:
         for direction in {Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest}:
-          move = self.getMove(x, y, direction)
+          move = self.getMove(x, y, direction, grid)
           if move.isSome():
             result.add move.get()
 
-  proc getPlayerPieces*(player: PieceColor): seq[tuple[x: int, y: int]] =
+  proc getPlayerPieces*(player: PieceColor, grid: seq[seq[GridSquare]]): seq[tuple[x: int, y: int]] =
     ## Returns a sequence of coordinates for each piece a given player has on the grid
 
     for x in 0 ..< self.dimension:
       for y in 0 ..< self.dimension:
-        if self.grid[x][y].piece.isSome():
-          if self.grid[x][y].piece.get().color == player:
+        if grid[x][y].piece.isSome():
+          if grid[x][y].piece.get().color == player:
             result.add (x, y)
 
-  proc getPlayerMoves*(player: PieceColor): seq[Move] =
+  proc getPlayerMoves*(player: PieceColor, grid: seq[seq[GridSquare]]): seq[Move] =
     ## Returns a sequence of `Move`s for each move a given player can make on the grid
 
-    let pieces = self.getPlayerPieces(player)
+    let pieces = self.getPlayerPieces(player, grid)
     for (x, y) in pieces:
-      result &= self.getMoves(x, y)
+      result &= self.getMoves(x, y, grid)
 
   proc cleanGrid* =
     ## Removes "potential" pieces from the grid, which are placed when a mouse hovers on the grid when a piece is selected.
@@ -262,40 +262,24 @@ class pub Board:
           if self.grid[x][y].piece.get().potential:
             self.grid[x][y] = newGridSquare(GridColor.dark)
 
-  proc move*(move: Move): bool =
+  proc move*(move: Move, grid: seq[seq[GridSquare]]): bool =
     ## Moves a piece on the grid, given a `Move` object. Can account for kings and jumps.
 
-    if self.grid[move.x][move.y].piece.isSome():
-      self.grid[move.x1][move.y1].piece = self.grid[move.x][move.y].piece
-      self.grid[move.x][move.y].piece = none(Piece)
+    if grid[move.x][move.y].piece.isSome():
+      grid[move.x1][move.y1].piece = grid[move.x][move.y].piece
+      grid[move.x][move.y].piece = none(Piece)
 
-      if self.grid[move.x1][move.y1].piece.get().color == self.human and move.x1 == 0 or self.grid[move.x1][move.y1].piece.get().color == self.ai and move.x1 == self.dimension - 1:
-        self.grid[move.x1][move.y1].piece.get().makeKing()
+      if grid[move.x1][move.y1].piece.get().color == self.human and move.x1 == 0 or grid[move.x1][move.y1].piece.get().color == self.ai and move.x1 == self.dimension - 1:
+        grid[move.x1][move.y1].piece.get().makeKing()
 
       if move.jump:
         let
           xMid = (move.x + move.x1) div 2
           yMid = (move.y + move.y1) div 2
-        self.grid[xMid][yMid].piece = none(Piece)
+        grid[xMid][yMid].piece = none(Piece)
         return true
     else:
       return false
-
-  # proc hasPlayerWon*(player: GridSquare, grid: seq[GridSquare]): bool =
-  #   ## assertions for diagonal wins
-  #   let
-  #     diagonalWinLeft = grid[0] == player and grid[4] == player and grid[8] == player
-  #     diagonalWinRight = grid[2] == player and grid[4] == player and grid[6] == player
-  #   if diagonalWinLeft or diagonalWinRight:
-  #     result = true
-
-  #   var rowWin, columnWin: bool
-  #   for i in 0 ..< self.dimension:
-  #     ## assertions for each x / column win
-  #     rowWin = grid[i][0] == player and grid[i][1] == player and grid[i][2] == player
-  #     columnWin = grid[0][i] == player and grid[1][i] == player and grid[2][i] == player
-  #     if rowWin or columnWin:
-  #       result = true
 
   proc opposingPlayer*(player: PieceColor): PieceColor =
     if player == PieceColor.black:
@@ -307,31 +291,45 @@ class pub Board:
     if gridSq.piece.isSome():
       return self.opposingPlayer(gridSq.piece.get().color)
 
-  # proc isGameOver*(grid: seq[seq[GridSquare]]): (bool, Option[PieceColor]) =
-  #   # checks whether the board is full
-  #   var
-  #     humanMoves, aiMoves: seq[Move]
-  #     winner: Option[PieceColor]
-  #     gameOver = false
+  proc hasPlayerLost*(pieces: seq[tuple[x: int, y: int]]): bool =
+    ## Returns true if a player has no pieces or moves left, otherwise false.
 
-  #   let
-  #     humanPieces = self.getPlayerPieces(self.human)
-  #     aiPieces = self.getPlayerPieces(self.ai)
+    if pieces.len > 0:
+      var moves: seq[Move]
 
-  #   if
-  #   for (x, y) in humanPieces:
-  #     humanMoves &= self.getMoves(x, y)
+      for (x, y) in pieces:
+        moves &= self.getMoves(x, y, self.grid)
 
-  #   let
-  #     humanMoves = self.getPlayerMoves(self.human)
-  #     aiMoves = self.getPlayerMoves(self.ai)
+      if moves.len > 0:
+        return false
+      else:
+        return true
+    else:
+      return true
 
-  #   if humanMoves.len == 0 and aiMoves.len == 0:
-  #     gameOver = true
-  #   elif humanMoves.len != 0 and aiMoves.len == 0:
+  proc isGameOver*(grid: seq[seq[GridSquare]]): (bool, Option[PieceColor]) =
+    ## Returns `(gameOver, Option[PieceColor])`.
+    ## `gameOver` if a player has no pieces or moves left.
+    ## `PieceColor` is returned if there is a winner.
 
+    var
+      gameOver = false
+      winner = none PieceColor
 
-  #   result = (gameOver, winner)
+    let
+      humanLoss = self.hasPlayerLost(self.getPlayerPieces(self.human, grid))
+      aiLoss = self.hasPlayerLost(self.getPlayerPieces(self.ai, grid))
+
+    if humanLoss and aiLoss:
+      gameOver = true
+    elif not humanLoss and aiLoss:
+      gameOver = true
+      winner = some self.human
+    elif humanLoss and not aiLoss:
+      gameOver = true
+      winner = some self.ai
+
+    return (gameOver, winner)
 
 
 class pub Checkers:
