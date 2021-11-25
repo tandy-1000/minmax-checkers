@@ -140,8 +140,6 @@ class pub Board:
   var
     dimension*: int
     grid*: seq[seq[GridSquare]]
-    humanPieces*, aiPieces*: seq[tuple[x: int, y: int]]
-    humanMoves*, aiMoves*: seq[Move]
     gameOver* = false
     gameResult*: Option[PieceColor] = none PieceColor
     ai*: PieceColor = PieceColor.white
@@ -149,7 +147,8 @@ class pub Board:
     difficulty*: Difficulty
 
   proc `new`(difficulty: Difficulty, dimension: int = 8): Board =
-    ## Initialises a `Board` object. Populates the board with dark and light squares, and black and white players.
+    ## Initialises a `Board` object.
+    ## Populates the board with dark and light squares, and black and white players.
 
     self.dimension = dimension
     self.difficulty = difficulty
@@ -162,16 +161,13 @@ class pub Board:
         else:
           if x >= 0 and x < populate:
             self.grid[x].add newGridSquare(GridColor.dark, some newPiece(color = self.ai))
-            self.aiPieces.add (x, y)
           elif x >= self.dimension - populate and x < self.dimension:
             self.grid[x].add newGridSquare(GridColor.dark, some newPiece(color = self.human))
-            self.humanPieces.add (x, y)
           else:
             self.grid[x].add newGridSquare(GridColor.dark)
-    echo repr self.aiPieces
 
   proc nextSquare*(x, y: int, direction: Direction): Move =
-    ## Returns a `Move` object for a given direction and coordinate
+    ## Returns a `Move` object for a given direction and coordinate.
 
     var
       x1 = x
@@ -194,7 +190,7 @@ class pub Board:
     return newMove(x, y, x1, y1)
 
   proc getCapture*(move: Move): Option[Move] =
-    ## Returns a `Move` object if a capture is possible
+    ## Returns a `Move` object if a capture is possible.
 
     let
       x1 = move.x1 + (move.x1 - move.x)
@@ -266,36 +262,12 @@ class pub Board:
           if self.grid[x][y].piece.get().potential:
             self.grid[x][y] = newGridSquare(GridColor.dark)
 
-  proc find*(coord: tuple[x: int, y: int], coords: seq[tuple[x: int, y: int]]): int =
-    ## Find a coord in a sequence of coords
-
-    var ind = -1
-    for i, coord1 in enumerate(coords):
-      if coord == coord1:
-        ind = i
-    return ind
-
-  proc removePiece*(coord: tuple[x: int, y: int], pieces: var seq[tuple[x: int, y: int]]) =
-    ## Remove a coord from a sequence of coords
-
-    var ind = -1
-    ind = self.find(coord, pieces)
-    if ind > -1:
-      pieces.del(ind)
-
   proc move*(move: Move): bool =
     ## Moves a piece on the grid, given a `Move` object. Can account for kings and jumps.
 
     if self.grid[move.x][move.y].piece.isSome():
       self.grid[move.x1][move.y1].piece = self.grid[move.x][move.y].piece
       self.grid[move.x][move.y].piece = none(Piece)
-
-      if self.grid[move.x1][move.y1].piece.get().color == self.human:
-        self.removePiece((x: move.x, y: move.y), self.humanPieces)
-        self.humanPieces.add (x: move.x1, y: move.y1)
-      elif self.grid[move.x1][move.y1].piece.get().color == self.ai:
-        self.removePiece((x: move.x, y: move.y), self.aiPieces)
-        self.aiPieces.add (x: move.x1, y: move.y1)
 
       if self.grid[move.x1][move.y1].piece.get().color == self.human and move.x1 == 0 or self.grid[move.x1][move.y1].piece.get().color == self.ai and move.x1 == self.dimension - 1:
         self.grid[move.x1][move.y1].piece.get().makeKing()
@@ -305,14 +277,6 @@ class pub Board:
           xMid = (move.x + move.x1) div 2
           yMid = (move.y + move.y1) div 2
         self.grid[xMid][yMid].piece = none(Piece)
-
-        if self.grid[move.x1][move.y1].piece.get().color == self.human:
-          self.removePiece((x: xMid, y: yMid), self.humanPieces)
-          self.humanPieces.add (x: move.x1, y: move.y1)
-        elif self.grid[move.x1][move.y1].piece.get().color == self.ai:
-          self.removePiece((x: xMid, y: yMid), self.aiPieces)
-          self.aiPieces.add (x: move.x1, y: move.y1)
-
         return true
     else:
       return false
