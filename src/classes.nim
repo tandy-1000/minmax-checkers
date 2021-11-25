@@ -1,4 +1,4 @@
-import std/options
+import std/[enumerate, options]
 import pkg/[nico, oolib]
 
 
@@ -8,7 +8,7 @@ type
   PieceColor* = enum
     black = "⚫", white = "🟤"
   Direction* = enum
-   northEast, northWest, southEast, southWest
+    northEast, northWest, southEast, southWest
   Difficulty* = enum
     easy = 6, medium = 7, hard = 8, impossible = 9
 
@@ -21,7 +21,7 @@ class pub Square:
 class pub Piece:
   var
     color*: PieceColor
-    king*, potential*, clue*: bool
+    king*, selected*, potential*, clue*: bool
 
   proc `new`(color: PieceColor, king, potential, clue: bool = false) =
     self.color = color
@@ -43,7 +43,9 @@ class pub Piece:
       r = (x1 - x) div 2
 
     setColor(7)
-    if self.potential:
+    if self.selected:
+      setColor(4):
+    elif self.potential:
       setColor(5)
     elif self.clue:
       setColor(3)
@@ -88,6 +90,8 @@ class pub Move:
     depth*: int = 0
 
   proc isLegal*(dimension: int = 8): bool =
+    ## Returns true if the `Move` is possible in the grid's dimensions.
+
     if (self.x1 >= 0 and self.x1 < dimension) and (self.y1 >= 0 and self.y1 <   dimension):
       return true
     else:
@@ -136,14 +140,12 @@ class pub Board:
   var
     dimension*: int
     grid*: seq[seq[GridSquare]]
-    # humanPieces*, aiPieces*: seq[(int, int)]
-    # humanMoves*, aiMoves*: seq[Move]
-    # gameOver* = false
-    # gameResult* = GridSquare.none
+    humanPieces*, aiPieces*: seq[tuple[x: int, y: int]]
+    humanMoves*, aiMoves*: seq[Move]
+    gameOver* = false
+    gameResult*: Option[PieceColor] = none PieceColor
     ai*: PieceColor = PieceColor.white
     human*, turn*: PieceColor = PieceColor.black
-    humanPieces*, aiPieces*: int = 12
-    humanKings*, aiKings*: int = 0
     difficulty*: Difficulty
 
   proc `new`(difficulty: Difficulty, dimension: int = 8): Board =
@@ -160,8 +162,10 @@ class pub Board:
         else:
           if x >= 0 and x < populate:
             self.grid[x].add newGridSquare(GridColor.dark, some newPiece(color = self.ai))
+            self.aiPieces.add (x, y)
           elif x >= self.dimension - populate and x < self.dimension:
             self.grid[x].add newGridSquare(GridColor.dark, some newPiece(color = self.human))
+            self.humanPieces.add (x, y)
           else:
             self.grid[x].add newGridSquare(GridColor.dark)
 
@@ -235,10 +239,8 @@ class pub Board:
           move = self.getMove(x, y, direction)
           if move.isSome():
             result.add move.get()
-    else:
-      result = @[]
 
-  proc getPlayerPieces*(player: PieceColor): seq[(int, int)] =
+  proc getPlayerPieces*(player: PieceColor): seq[tuple[x: int, y: int]] =
     ## Returns a sequence of coordinates for each piece a given player has on the grid
 
     for x in 0 ..< self.dimension:
@@ -259,22 +261,56 @@ class pub Board:
 
     for x in 0 ..< self.dimension:
       for y in 0 ..< self.dimension:
-        if self.grid[x][y].piece.get().potential:
-          self.grid[x][y] = newGridSquare(GridColor.dark)
+        if self.grid[x][y].piece.isSome():
+          if self.grid[x][y].piece.get().potential:
+            self.grid[x][y] = newGridSquare(GridColor.dark)
 
-  proc move*(move: Move) =
+  proc find*(coord: tuple[x: int, y: int], coords: seq[tuple[x: int, y: int]]): int =
+    ## Find a coord in a sequence of coords
+
+    var ind = -1
+    for i, coord1 in enumerate(coords):
+      if coord == coord1:
+        ind = i
+    return ind
+
+  proc removePiece*(coord: tuple[x: int, y: int], pieces: var seq[tuple[x: int, y: int]]) =
+    ## Remove a coord from a sequence of coords
+
+    var ind = -1
+    ind = self.find(coord, pieces)
+    if ind > -1:
+      pieces.del(ind)
+
+  proc move*(move: Move): bool =
     ## Moves a piece on the grid, given a `Move` object. Can account for kings and jumps.
 
-    self.grid[move.x1][move.y1].piece = self.grid[move.x][move.y].piece
-    self.grid[move.x][move.y].piece = none(Piece)
-    if self.grid[move.x1][move.y1].piece.isSome():
+    if self.grid[move.x][move.y].piece.isSome():
+      self.grid[move.x1][move.y1].piece = self.grid[move.x][move.y].piece
+      self.grid[move.x][move.y].piece = none(Piece)
+
+      if  self.grid[move.x1][move.y1].piece.get().color == self.human:
+        self.removePiece((x: move.x, y: move.y), self.humanPieces)
+      elif  self.grid[move.x1][move.y1].piece.get().color == self.ai:
+        self.removePiece((x: move.x, y: move.y), self.aiPieces)
+
       if self.grid[move.x1][move.y1].piece.get().color == self.human and move.x1 == 0 or self.grid[move.x1][move.y1].piece.get().color == self.ai and move.x1 == self.dimension - 1:
         self.grid[move.x1][move.y1].piece.get().makeKing()
-    if move.jump:
-      let
-        xMid = (move.x + move.x1) div 2
-        yMid = (move.y + move.y1) div 2
-      self.grid[xMid][yMid].piece = none(Piece)
+
+      if move.jump:
+        let
+          xMid = (move.x + move.x1) div 2
+          yMid = (move.y + move.y1) div 2
+        self.grid[xMid][yMid].piece = none(Piece)
+
+        if  self.grid[move.x1][move.y1].piece.get().color == self.human:
+          self.removePiece((x: move.x, y: move.y), self.humanPieces)
+        elif  self.grid[move.x1][move.y1].piece.get().color == self.ai:
+           self.removePiece((x: move.x, y: move.y), self.aiPieces)
+
+        return true
+    else:
+      return false
 
   # proc hasPlayerWon*(player: GridSquare, grid: seq[GridSquare]): bool =
   #   ## assertions for diagonal wins
@@ -292,26 +328,41 @@ class pub Board:
   #     if rowWin or columnWin:
   #       result = true
 
-  # proc isGameOver*(
-  #   grid: seq[GridSquare],
-  #   availableMoves: seq[Move]
-  # ): (bool, GridSquare) =
+  proc opposingPlayer*(player: PieceColor): PieceColor =
+    if player == PieceColor.black:
+      return PieceColor.white
+    elif player == PieceColor.white:
+      return PieceColor.black
+
+  proc opposingPlayerGridSq*(gridSq: GridSquare): PieceColor =
+    if gridSq.piece.isSome():
+      return self.opposingPlayer(gridSq.piece.get().color)
+
+  # proc isGameOver*(grid: seq[seq[GridSquare]]): (bool, Option[PieceColor]) =
   #   # checks whether the board is full
   #   var
-  #     winner = GridSquare.none
-  #     gameOver = availableMoves.len == 0
+  #     humanMoves, aiMoves: seq[Move]
+  #     winner: Option[PieceColor]
+  #     gameOver = false
 
-  #   for player in {GridSquare.black, GridSquare.white}:
-  #     if self.hasPlayerWon(player, grid):
-  #       winner = player
-  #       gameOver = true
+  #   let
+  #     humanPieces = self.getPlayerPieces(self.human)
+  #     aiPieces = self.getPlayerPieces(self.ai)
+
+  #   if
+  #   for (x, y) in humanPieces:
+  #     humanMoves &= self.getMoves(x, y)
+
+  #   let
+  #     humanMoves = self.getPlayerMoves(self.human)
+  #     aiMoves = self.getPlayerMoves(self.ai)
+
+  #   if humanMoves.len == 0 and aiMoves.len == 0:
+  #     gameOver = true
+  #   elif humanMoves.len != 0 and aiMoves.len == 0:
+
+
   #   result = (gameOver, winner)
-
-  # proc opposingPlayer*(gridSq: GridSquare): PieceColor =
-  #   if get(gridSq.piece).color == PieceColor.black:
-  #     return PieceColor.white
-  #   elif get(gridSq.piece).color == PieceColor.white:
-  #     return PieceColor.black
 
 
 class pub Checkers:
@@ -338,17 +389,13 @@ class pub Checkers:
       y1 = y + self.size
       for col in 0 ..< self.board.dimension:
         x1 = x + self.size
-        self.gridBounds[x].add newSquare(x, y, x1, y1)
+        self.gridBounds[row].add newSquare(x, y, x1, y1)
         x = x1
       y = y1
     self.gridSquare = newSquare(self.offset, self.offset, y, y)
 
-  # proc xySquare*(x, y: int): int =
-  #   ## proc for getting a grid index from a mouse position
-  #   let
-  #     x = (x - self.offset) div self.size
-  #     y = (y - self.offset) div self.size
-  #   return self.board.xyIndex(x, y)
+  ## Returns a grid index from a mouse position
+  proc xyToGrid*(pos: (int, int)): (int, int) =  ((pos[1] - self.offset) div self.size, (pos[0] - self.offset) div self.size)
 
   proc drawStartPage* =
     cls()

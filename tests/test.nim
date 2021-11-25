@@ -73,7 +73,7 @@ suite "Board":
           newGridSquare(GridColor.light)
         ]
       ]
-    board.move board.nextSquare(3, 0, Direction.northEast)
+    discard board.move board.nextSquare(3, 0, Direction.northEast)
     check board.grid == grid
 
   test "Make capture":
@@ -103,9 +103,9 @@ suite "Board":
           newGridSquare(GridColor.light)
         ]
       ]
-    board.move board.nextSquare(0, 3, Direction.southWest)
+    discard board.move board.nextSquare(0, 3, Direction.southWest)
     let capture = board.getCapture(newMove(2, 1, 1, 2)).get()
-    board.move capture
+    discard board.move capture
     check board.grid == grid and capture == newMove(2, 1, 0, 3)
 
   test "Get moves (king)":
