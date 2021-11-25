@@ -1,4 +1,4 @@
-import std/[enumerate, options]
+import std/options
 import pkg/[nico, oolib]
 
 
@@ -95,13 +95,20 @@ class pub Move:
     score*: BiggestInt = 0
     depth*: int = 0
 
-  proc isLegal*(dimension: int = 8): bool =
+  proc isPossible*(dimension: int = 8): bool =
     ## Returns true if the `Move` is possible in the grid's dimensions.
 
-    if (self.x1 >= 0 and self.x1 < dimension) and (self.y1 >= 0 and self.y1 <   dimension):
+    if self.x > -1 and self.x < dimension and self.y > -1 and self.y < dimension and self.x1 > -1 and self.x1 < dimension and self.y1 > -1 and self.y1 < dimension:
       return true
-    else:
-      return false
+
+  proc midpoint*: tuple[x: int, y: int] =
+    ## Returns the midpoint of a jump move.
+
+    if self.jump:
+      let
+        x = (self.x + self.x1) div 2
+        y = (self.y + self.y1) div 2
+      return (x, y)
 
 
 # func for checking equality between `Move`s
@@ -125,6 +132,10 @@ proc debugPieces*(pieces: seq[Piece]): string =
 proc debugMove*(move: Move): string =
   let str = "x: " & $move.x & " y: " & $move.y & "\nx1: " & $move.x1 & " y1: " & $move.y1 & "\njump: " & $move.jump
   return str
+
+proc debugMoves*(moves: seq[Move]): string =
+  for move in moves:
+    echo debugMove move
 
 proc debugGrid*(grid: seq[seq[GridSquare]]): string =
   for x in 0 ..< grid.len:
@@ -195,53 +206,57 @@ class pub Board:
 
     return newMove(x, y, x1, y1)
 
-  proc getCapture*(move: Move, grid: seq[seq[GridSquare]]): Option[Move] =
-    ## Returns a `Move` object if a capture is possible.
-
+  proc getJump*(move: Move): Move =
+    ## Returns a jump move, one grid square ahead of the current move.
     let
       x1 = move.x1 + (move.x1 - move.x)
       y1 = move.y1 + (move.y1 - move.y)
-      capture = newMove(move.x, move.y, x1, y1, jump = true)
 
-    if capture.isLegal(dimension = self.dimension):
-      if grid[x1][y1].piece.isNone() and grid[move.x1][move.y1].piece.isSome():
-        if grid[move.x1][move.y1].piece.get().color != grid[move.x][move.y].piece.get().color:
-          return some capture
+    return newMove(move.x, move.y, x1, y1, jump = true)
 
-  proc getMove*(x, y: int, direction: Direction, grid: seq[seq[GridSquare]]): Option[Move] =
-    ## Returns a `Move` object given a coordinate and a `Direction`
+  proc isMoveLegal*(move: Move, grid: seq[seq[GridSquare]]): bool =
+    if move.isPossible(dimension = self.dimension):
+      if move.jump:
+        if grid[move.x][move.y].piece.isSome() and grid[move.x1][move.y1].piece.isNone():
+          let (xMid, yMid) = move.midpoint()
+          if grid[xMid][yMid].piece.get().color != grid[move.x][move.y].piece.get().color:
+            return true
+      else:
+        if grid[move.x1][move.y1].piece.isNone():
+          return true
+
+  proc getCapture*(move: Move, grid: seq[seq[GridSquare]]): Option[Move] =
+    ## Returns a `Move` object if a capture is possible.
+
+    let capture = self.getJump(move)
+    if self.isMoveLegal(capture, grid):
+      return some capture
+
+  proc getMove*(x, y: int, direction: Direction, grid: seq[seq[GridSquare]]): seq[Move] =
+    ## Returns a sequence of `Move` object given a coordinate and a `Direction`
 
     let move = self.nextSquare(x, y, direction)
-    if move.isLegal(dimension = self.dimension):
+    if self.isMoveLegal(move, grid):
+      result.add move
+    elif move.isPossible(dimension = self.dimension):
       if grid[move.x1][move.y1].piece.isSome():
         let capture = self.getCapture(move, grid)
         if capture.isSome():
-          return capture
-      else:
-        return some move
-    else:
-      return none Move
+          result.add capture.get()
 
   proc getMoves*(x, y: int, grid: seq[seq[GridSquare]]): seq[Move] =
     ## Returns a sequence of `Move` objects for a given coordinate, including captures
 
     if grid[x][y].piece.isSome():
-      var move: Option[Move]
       if grid[x][y].piece.get().color == self.human and grid[x][y].piece.get().king == false:
         for direction in {Direction.northEast, Direction.northWest}:
-          move = self.getMove(x, y, direction, grid)
-          if move.isSome():
-            result.add move.get()
+          result &= self.getMove(x, y, direction, grid)
       elif grid[x][y].piece.get().color == self.ai and grid[x][y].piece.get().king == false:
         for direction in {Direction.southEast, Direction.southWest}:
-          move = self.getMove(x, y, direction, grid)
-          if move.isSome():
-            result.add move.get()
+          result &= self.getMove(x, y, direction, grid)
       else:
         for direction in {Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest}:
-          move = self.getMove(x, y, direction, grid)
-          if move.isSome():
-            result.add move.get()
+          result &= self.getMove(x, y, direction, grid)
 
   proc getPlayerPieces*(player: PieceColor, grid: seq[seq[GridSquare]]): seq[tuple[x: int, y: int]] =
     ## Returns a sequence of coordinates for each piece a given player has on the grid
