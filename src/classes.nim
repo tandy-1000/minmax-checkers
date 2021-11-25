@@ -168,6 +168,7 @@ class pub Board:
             self.humanPieces.add (x, y)
           else:
             self.grid[x].add newGridSquare(GridColor.dark)
+    echo repr self.aiPieces
 
   proc nextSquare*(x, y: int, direction: Direction): Move =
     ## Returns a `Move` object for a given direction and coordinate
@@ -289,10 +290,12 @@ class pub Board:
       self.grid[move.x1][move.y1].piece = self.grid[move.x][move.y].piece
       self.grid[move.x][move.y].piece = none(Piece)
 
-      if  self.grid[move.x1][move.y1].piece.get().color == self.human:
+      if self.grid[move.x1][move.y1].piece.get().color == self.human:
         self.removePiece((x: move.x, y: move.y), self.humanPieces)
-      elif  self.grid[move.x1][move.y1].piece.get().color == self.ai:
+        self.humanPieces.add (x: move.x1, y: move.y1)
+      elif self.grid[move.x1][move.y1].piece.get().color == self.ai:
         self.removePiece((x: move.x, y: move.y), self.aiPieces)
+        self.aiPieces.add (x: move.x1, y: move.y1)
 
       if self.grid[move.x1][move.y1].piece.get().color == self.human and move.x1 == 0 or self.grid[move.x1][move.y1].piece.get().color == self.ai and move.x1 == self.dimension - 1:
         self.grid[move.x1][move.y1].piece.get().makeKing()
@@ -303,10 +306,12 @@ class pub Board:
           yMid = (move.y + move.y1) div 2
         self.grid[xMid][yMid].piece = none(Piece)
 
-        if  self.grid[move.x1][move.y1].piece.get().color == self.human:
-          self.removePiece((x: move.x, y: move.y), self.humanPieces)
-        elif  self.grid[move.x1][move.y1].piece.get().color == self.ai:
-           self.removePiece((x: move.x, y: move.y), self.aiPieces)
+        if self.grid[move.x1][move.y1].piece.get().color == self.human:
+          self.removePiece((x: xMid, y: yMid), self.humanPieces)
+          self.humanPieces.add (x: move.x1, y: move.y1)
+        elif self.grid[move.x1][move.y1].piece.get().color == self.ai:
+          self.removePiece((x: xMid, y: yMid), self.aiPieces)
+          self.aiPieces.add (x: move.x1, y: move.y1)
 
         return true
     else:
