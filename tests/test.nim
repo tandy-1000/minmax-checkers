@@ -108,6 +108,37 @@ suite "Board":
     discard board.move(capture, board.grid)
     check board.grid == grid and capture == newMove(2, 1, 0, 3)
 
+  test "Regicide":
+    let
+      grid = @[
+        @[
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.white)),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.black, king = true))
+        ],
+        @[
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light)
+        ],
+        @[
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark)],
+        @[
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.black)),
+          newGridSquare(GridColor.light)
+        ]
+      ]
+    discard board.move(board.nextSquare(0, 3, Direction.southWest), grid)
+    discard board.move(board.getCapture(newMove(0, 1, 1, 2), grid).get(), grid)
+    check grid[2][3].piece.get().king == true
+
   test "Get moves (king)":
     check board.getMoves(0, 3, board.grid) == @[newMove(0, 3, 1, 2)]
 
