@@ -54,3 +54,6 @@ task androidr, "Release build for android":
       exec &"gradlew.bat assembleDebug"
     else:
       exec "./gradlew assembleDebug"
+
+task test, "run tests":
+  exec "nim r tests/test.nim"
