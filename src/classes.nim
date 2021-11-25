@@ -40,7 +40,8 @@ class pub Piece:
       y1 = gridBound.y1 - offset
       x2 = (x1 + x) div 2
       y2 = (y1 + y) div 2
-      r = (x1 - x) div 2
+      rx = (gridBound.x1 - gridBound.x - offset) div 2
+      ry = (gridBound.y1 - gridBound.y - (offset div 2)) div 4
 
     setColor(7)
     if self.selected:
@@ -51,15 +52,20 @@ class pub Piece:
       setColor(3)
 
     if self.color == PieceColor.black:
-      circfill(x2, y2, r)
-      setColor(0)
-      circfill(x2, y2, r-1)
+      setColor(4)
+      ellipsefill(x2, y2, rx, ry)
+      setColor(15)
+      ellipsefill(x2, y2 - 1, rx, ry - 1)
+
     elif self.color == PieceColor.white:
-      circfill(x2, y2, r)
+      setColor(6)
+      ellipsefill(x2, y2, rx, ry)
+      setColor(7)
+      ellipsefill(x2, y2 - (offset div 4), rx, ry - (offset div 4))
 
     if self.king:
-      setColor(0)
-      printc("K", x2+1, y2-2)
+      setColor(9)
+      printc("K", x2+1, y2-3)
 
 
 # func for checking equality between `Piece`s
@@ -198,7 +204,7 @@ class pub Board:
       capture = newMove(move.x, move.y, x1, y1, jump = true)
 
     if capture.isLegal(dimension = self.dimension):
-      if grid[x1][y1].piece == none(Piece) and grid[move.x1][move.y1].piece.isSome():
+      if grid[x1][y1].piece.isNone() and grid[move.x1][move.y1].piece.isSome():
         if grid[move.x1][move.y1].piece.get().color != grid[move.x][move.y].piece.get().color:
           return some capture
 
@@ -276,6 +282,8 @@ class pub Board:
         let
           xMid = (move.x + move.x1) div 2
           yMid = (move.y + move.y1) div 2
+        if grid[xMid][yMid].piece.get().king == true:
+          grid[move.x1][move.y1].piece.get().king = true
         grid[xMid][yMid].piece = none(Piece)
         return true
     else:
