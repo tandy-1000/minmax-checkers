@@ -294,10 +294,6 @@ class pub Board:
       else:
         self.turn = self.opposingPlayer(self.turn)
 
-  proc opposingPlayerGridSq*(gridSq: GridSquare): PieceColor =
-    if gridSq.piece.isSome():
-      return self.opposingPlayer(gridSq.piece.get().color)
-
   proc hasPlayerLost*(pieces: seq[tuple[x: int, y: int]]): bool =
     ## Returns true if a player has no pieces or moves left, otherwise false.
 
