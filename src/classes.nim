@@ -268,7 +268,13 @@ class pub Board:
           if self.grid[x][y].piece.get().potential:
             self.grid[x][y] = newGridSquare(GridColor.dark)
 
-  proc move*(move: Move, grid: seq[seq[GridSquare]]): bool =
+  proc opposingPlayer*(player: PieceColor): PieceColor =
+    if player == PieceColor.black:
+      return PieceColor.white
+    elif player == PieceColor.white:
+      return PieceColor.black
+
+  proc move*(move: Move, grid: seq[seq[GridSquare]]) =
     ## Moves a piece on the grid, given a `Move` object. Can account for kings and jumps.
 
     if grid[move.x][move.y].piece.isSome():
@@ -285,15 +291,8 @@ class pub Board:
         if grid[xMid][yMid].piece.get().king == true:
           grid[move.x1][move.y1].piece.get().king = true
         grid[xMid][yMid].piece = none(Piece)
-        return true
-    else:
-      return false
-
-  proc opposingPlayer*(player: PieceColor): PieceColor =
-    if player == PieceColor.black:
-      return PieceColor.white
-    elif player == PieceColor.white:
-      return PieceColor.black
+      else:
+        self.turn = self.opposingPlayer(self.turn)
 
   proc opposingPlayerGridSq*(gridSq: GridSquare): PieceColor =
     if gridSq.piece.isSome():
