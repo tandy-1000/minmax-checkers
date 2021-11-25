@@ -173,7 +173,7 @@ suite "Board":
 
   test "Game Over (true, human winner)":
     board.move(board.nextSquare(0, 1, Direction.southEast), board.grid)
-    board.move(board.getMove(0, 3, Direction.southWest, board.grid).get(), board.grid)
+    board.move(board.getMove(0, 3, Direction.southWest, board.grid)[0], board.grid)
     let (gameOver, winner) = board.isGameOver(board.grid)
     check gameOver == true and winner == some board.human
 
