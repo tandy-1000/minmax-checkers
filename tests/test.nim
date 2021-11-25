@@ -73,7 +73,7 @@ suite "Board":
           newGridSquare(GridColor.light)
         ]
       ]
-    discard board.move(board.nextSquare(3, 0, Direction.northEast), board.grid)
+    board.move(board.nextSquare(3, 0, Direction.northEast), board.grid)
     check board.grid == grid
 
   test "Make capture":
@@ -103,9 +103,9 @@ suite "Board":
           newGridSquare(GridColor.light)
         ]
       ]
-    discard board.move(board.nextSquare(0, 3, Direction.southWest), board.grid)
+    board.move(board.nextSquare(0, 3, Direction.southWest), board.grid)
     let capture = board.getCapture(newMove(2, 1, 1, 2), board.grid).get()
-    discard board.move(capture, board.grid)
+    board.move(capture, board.grid)
     check board.grid == grid and capture == newMove(2, 1, 0, 3)
 
   test "Regicide":
@@ -135,8 +135,8 @@ suite "Board":
           newGridSquare(GridColor.light)
         ]
       ]
-    discard board.move(board.nextSquare(0, 3, Direction.southWest), grid)
-    discard board.move(board.getCapture(newMove(0, 1, 1, 2), grid).get(), grid)
+    board.move(board.nextSquare(0, 3, Direction.southWest), grid)
+    board.move(board.getCapture(newMove(0, 1, 1, 2), grid).get(), grid)
     check grid[2][3].piece.get().king == true
 
   test "Get moves (king)":
@@ -172,8 +172,8 @@ suite "Board":
     check gameOver == false and winner == none PieceColor
 
   test "Game Over (true, human winner)":
-    discard board.move(board.nextSquare(0, 1, Direction.southEast), board.grid)
-    discard board.move(board.getMove(0, 3, Direction.southWest, board.grid).get(), board.grid)
+    board.move(board.nextSquare(0, 1, Direction.southEast), board.grid)
+    board.move(board.getMove(0, 3, Direction.southWest, board.grid).get(), board.grid)
     let (gameOver, winner) = board.isGameOver(board.grid)
     check gameOver == true and winner == some board.human
 
