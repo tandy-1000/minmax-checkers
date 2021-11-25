@@ -136,15 +136,15 @@ suite "Board":
   test "Has player lost (ai)":
     check board.hasPlayerLost(board.getPlayerPieces(board.ai, board.grid)) == false
 
-  # test "Game Over (false, no winner)":
-  #   let (gameOver, winner) = board.isGameOver(board.grid)
-  #   check gameOver == false and winner == none PieceColor
+  test "Game Over (false, no winner)":
+    let (gameOver, winner) = board.isGameOver(board.grid)
+    check gameOver == false and winner == none PieceColor
 
-  # test "Game Over (true, human winner)":
-  #   discard board.move(board.nextSquare(0, 1, Direction.southEast), board.grid)
-  #   discard board.move(board.getMove(0, 3, Direction.southWest, board.grid).get(), board.grid)
-  #   let (gameOver, winner) = board.isGameOver(board.grid)
-  #   check gameOver == true and winner == some board.human
+  test "Game Over (true, human winner)":
+    discard board.move(board.nextSquare(0, 1, Direction.southEast), board.grid)
+    discard board.move(board.getMove(0, 3, Direction.southWest, board.grid).get(), board.grid)
+    let (gameOver, winner) = board.isGameOver(board.grid)
+    check gameOver == true and winner == some board.human
 
   test "Game Over (no pieces)":
     let
