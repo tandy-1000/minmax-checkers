@@ -5,7 +5,7 @@ A simple minmax checkers game in Nim with [nico](https://github.com/ftsf/nico).
 - [ ] Selectable player color
 - [ ] Varying difficulty (varying minimax depth)
 - [ ] Click and drop
-- [ ] Human-like AI move making
+- [x] Human-like AI move making
 - [x] King conversion at baseline
 - [x] Regicide
 - [x] Forced capture
