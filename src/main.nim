@@ -1,4 +1,4 @@
-import std/[random, enumerate, options]
+import std/[random, options]
 import pkg/nico
 import classes
 
@@ -23,50 +23,51 @@ proc gameDraw*() =
     setColor(7)
     printc("CHECKERS", screenWidth div 2, 8)
 
-    var
-      color = 1
-      square: Square
-    for row in 0 ..< c.board.dimension:
-      for col in 0 ..< c.board.dimension:
-        if color == 15: color = 1
-        square = c.gridBounds[row][col]
-        if c.board.grid[row][col].color == GridColor.light:
-          setColor(color)
+    var square: Square
+    for x in 0 ..< c.board.dimension:
+      for y in 0 ..< c.board.dimension:
+        square = c.gridBounds[x][y]
+        if c.board.grid[x][y].color == GridColor.light:
+          setColor(7)
           rectfill(square.x, square.y, square.x1, square.y1)
-          setColor(7)
-          rect(square.x, square.y, square.x1, square.y1)
-          inc color
         else:
-          setColor(7)
-          rect(square.x, square.y, square.x1, square.y1)
-        get(c.board.grid[row][col].val).draw(square)
+          setColor(3)
+          rectfill(square.x, square.y, square.x1, square.y1)
+        if c.board.grid[x][y].piece.isSome():
+          c.board.grid[x][y].piece.get().draw(square)
 
-    # c.drawHelpButton()
+    c.drawHelpButton()
     # c.displayClues()
 
     if c.outOfBounds:
       setColor(4)
-      printc("Please click within the grid!", screenWidth div 2, 120)
+      printc("Please click within the grid!", screenWidth div 2, 246)
 
     if not c.successfulMove:
       setColor(4)
-      printc("This position has been played!", screenWidth div 2, 120)
+      printc("This position has been played!", screenWidth div 2, 246)
 
-    if c.board.gameResult == c.board.human:
-      c.gameOverMessage("You Win!", 3)
-    elif c.board.gameResult == c.board.ai:
-      c.gameOverMessage("You Lose!", 4)
-    elif c.board.gameResult == GridValue.none and c.board.gameOver == true:
-      c.gameOverMessage("Game Over.", 4)
+    if c.board.gameOver:
+      if c.board.gameResult.isSome():
+        if c.board.gameResult.get() == c.board.human:
+          c.gameOverMessage("You Win!", 3)
+        elif c.board.gameResult.get() == c.board.ai:
+          c.gameOverMessage("You Lose!", 4)
+      else:
+        c.gameOverMessage("Game Over.", 4)
 
 proc gameUpdate*(dt: float32) =
   var
     pos: (int, int)
     pressed = false
+
+  ## checks if the game has started
   if not c.started:
     pressed = mousebtnp(0)
     if pressed:
       pos = mouse()
+
+      ## checks whether the click is within the bounds of the various buttons
       if c.isInBounds(pos, newSquare(27, 44, 49, 56)):
         c.board.difficulty = Difficulty.easy
       elif c.isInBounds(pos, newSquare(50, 44, 78, 56)):
@@ -86,19 +87,23 @@ proc gameUpdate*(dt: float32) =
       elif c.isInBounds(pos, newSquare(118, 118, 125, 125)):
         c.showRules = not c.showRules
   else:
+    ## game logic
     c.board.cleanGrid()
-    c.board.availablePositions = c.board.getAvailablePositions(c.board.grid)
-    (c.board.gameOver, c.board.gameResult) = c.board.isGameOver(c.board.grid, c.board.availablePositions)
+    (c.board.gameOver, c.board.gameResult) = c.board.isGameOver(c.board.grid)
     if c.board.turn == c.board.human and c.board.gameOver == false:
-      pos = mouse()
-      if not c.isOutOfBounds(pos, c.gridSquare):
-        let i = c.xySquare(pos[0], pos[1])
-        if c.board.grid[i].color == GridColor.dark:
-          c.board.grid[i].val = newPiece(c.board.human, i, potential = true)
+      # pos = mouse()
+      # if not c.isOutOfBounds(pos, c.gridSquare):
+      #   let (x, y) = c.xyToGrid(pos)
+      #   if c.board.grid[x][y].color == GridColor.dark:
+      #     if c.board.grid[x][y].piece.isNone():
+      #       c.board.grid[x][y].piece = some newPiece(c.board.human, potential = true)
 
       pressed = mousebtnp(0)
       if pressed:
         pos = mouse()
+
+        ## checks whether the mouse click is within the game grid
+        ## or within the clue button
         if c.isOutOfBounds(pos, c.gridSquare):
           if c.isInBounds(pos, newSquare(118, 118, 125, 125)):
             # c.showClues = not c.showClues
@@ -106,14 +111,11 @@ proc gameUpdate*(dt: float32) =
           else:
             c.outOfBounds = true
         else:
-          let i = c.xySquare(pos[0], pos[1])
-          c.successfulMove = c.board.placePiece(newPosition(i), c.board.human)
-          if c.successfulMove:
-            c.board.turn = c.board.ai
+          c.outOfBounds = false
+          c.select c.xyToGrid(pos)
     elif c.board.turn == c.board.ai and c.board.gameOver == false:
-      c.successfulMove = c.board.moveAI(c.board.ai, c.board.difficulty)
-      if c.successfulMove:
-        c.board.turn = c.board.human
+      c.board.moveAI()
+
 
 nico.init(orgName, appName)
 nico.createWindow(appName, 256, 256, 4, false)
