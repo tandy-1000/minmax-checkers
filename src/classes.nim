@@ -471,6 +471,9 @@ class pub Checkers:
         if move in self.board.getPlayerMoves(self.board.human, self.board.grid):
           self.deselect (move.x, move.y)
           self.board.move(move, self.board.grid)
+          self.successfulMove = true
+        else:
+          self.successfulMove = false
 
   proc drawStartPage* =
     cls()

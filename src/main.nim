@@ -45,7 +45,7 @@ proc gameDraw*() =
 
     if not c.successfulMove:
       setColor(4)
-      printc("This position has been played!", screenWidth div 2, 246)
+      printc("Try another position!", screenWidth div 2, 246)
 
     if c.board.gameOver:
       if c.board.gameResult.isSome():
