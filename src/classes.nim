@@ -21,15 +21,14 @@ class pub Square:
 class pub Piece:
   var
     color*: PieceColor
-    king*, selected*, potential*, clue*: bool
+    king*, selected*: bool
     directions*: seq[Direction]
 
-  proc `new`(color: PieceColor, directions: seq[Direction] = @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest], king, potential, clue: bool = false) =
+  proc `new`(color: PieceColor, directions: seq[Direction] = @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest], king, selected: bool = false) =
     self.color = color
     self.directions = directions
     self.king = king
-    self.potential = potential
-    self.clue = clue
+    self.selected = selected
 
   proc makeKing* =
     self.king = true
@@ -45,10 +44,13 @@ class pub GridSquare:
   var
     color*: GridColor
     piece*: Option[Piece]
+    potential*, clue*: bool
 
-  proc `new`(color: GridColor, piece: Option[Piece] = none(Piece)) =
+  proc `new`(color: GridColor, piece: Option[Piece] = none(Piece), potential, clue: bool = false) =
     self.color = color
     self.piece = piece
+    self.potential = potential
+    self.clue = clue
 
 
 # func for checking equality between `GridSquare`s
@@ -299,9 +301,8 @@ class pub Board:
 
     for x in 0 ..< self.dimension:
       for y in 0 ..< self.dimension:
-        if self.grid[x][y].piece.isSome():
-          if self.grid[x][y].piece.get().potential:
-            self.grid[x][y] = newGridSquare(GridColor.dark)
+        if self.grid[x][y].potential:
+          self.grid[x][y].potential = false
 
   proc changeTurn* =
     if self.turn == PieceColor.black:
@@ -329,8 +330,8 @@ class pub Board:
         if moves != @[]:
           if moves[0].jump:
             if moves.len == 1:
-              self.move(moves[0], grid)
               os.sleep(600)
+              self.move(moves[0], grid)
           else:
             self.changeTurn()
         else:
@@ -397,7 +398,7 @@ class pub Checkers:
     selected* = none tuple[x: int, y: int]
     started* = false
     showRules* = false
-    showHints* = false
+    showHints* = true
     showClues* = false
     outOfBounds* = false
     successfulMove* = true
@@ -433,17 +434,12 @@ class pub Checkers:
     if piece.selected:
       setColor(11)
       ellipsefill(x2, y2, rx + 1, ry + 1)
-    elif piece.potential and self.showHints:
-      setColor(5)
-    elif piece.clue:
-      setColor(3)
 
     if piece.color == PieceColor.black:
       setColor(4)
       ellipsefill(x2, y2, rx, ry)
       setColor(15)
       ellipsefill(x2, y2 - 1, rx, ry - 1)
-
     elif piece.color == PieceColor.white:
       setColor(6)
       ellipsefill(x2, y2, rx, ry)
@@ -452,7 +448,8 @@ class pub Checkers:
 
     if piece.king:
       setColor(9)
-      printc("K", x2+1, y2-3)
+      printc("K", x2 + 1, y2 - 3)
+
 
   ## Returns a grid index from a mouse position
   proc xyToGrid*(pos: tuple[y: int, x: int]): (int, int) =  ((pos.x - self.offset) div self.size, (pos.y - self.offset) div self.size)
@@ -491,13 +488,14 @@ class pub Checkers:
     let
       hCenter = screenWidth div 2
       padding = 20
-      r = 6
+      r = 12
       d = r * 2
-      diffRowY = (padding * 2) + padding div 2
-      playerRowY = (padding * 4)
+      diffRowY = padding * 4
+      playerRowY = padding * 6
+      hintRowY = padding * 8
 
     setColor(3)
-    rect(hCenter - d, (screenHeight - padding) - r, hCenter + d, (screenHeight - padding) + r)
+    rect(hCenter - d, (screenHeight - 2*padding) - r, hCenter + d, (screenHeight - 2*padding) + r)
 
     setColor(1)
     if self.board.difficulty == Difficulty.easy:
@@ -523,7 +521,7 @@ class pub Checkers:
       setColor(0)
     else:
       rect(hCenter - 2*d, playerRowY - r, hCenter, playerRowY + r)
-    printc("white", hCenter - 2*r + 1, playerRowY - 2)
+    printc("white", hCenter - d + 1, playerRowY - 2)
 
     setColor(7)
     if self.board.human == PieceColor.black:
@@ -531,14 +529,31 @@ class pub Checkers:
       setColor(0)
     else:
       rect(hCenter, playerRowY - r, hCenter + 2*d, playerRowY + r)
-    printc("black", hCenter + 2*r + 1, playerRowY - 2)
+    printc("black", hCenter + d + 1, playerRowY - 2)
 
     setColor(7)
-    printc("CHECKERS", hCenter, padding)
+    printc("Hints:", hCenter + 2, hintRowY - r)
+    if self.showHints:
+      rectfill(hCenter - d, hintRowY, hCenter, hintRowY + d)
+      setColor(0)
+    else:
+      rect(hCenter - d, hintRowY, hCenter, hintRowY + d)
+    printc("ON", hCenter - r + 1, hintRowY + r - 2)
+
+    setColor(7)
+    if not self.showHints:
+      rectfill(hCenter, hintRowY, hCenter + d, hintRowY + d)
+      setColor(0)
+    else:
+      rect(hCenter, hintRowY, hCenter + d, hintRowY + d)
+    printc("OFF", hCenter + r + 1, hintRowY + r - 2)
+
+    setColor(7)
+    printc("CHECKERS", hCenter, padding * 2)
     printc("easy", hCenter - (2*d) - 1, diffRowY - 3)
     printc("medium", hCenter + 1, diffRowY - 3)
     printc("hard", hCenter + (2*d) + 3, diffRowY - 3)
-    printc("Start", hCenter + 1, (screenHeight - padding) - 3)
+    printc("Start", hCenter + 1, (screenHeight - padding*2) - 3)
 
   proc isInBounds*(pos: (int, int), square: Square): bool =
     if (pos[0] >= square.x and pos[0] <= square.x1) and (pos[1] >= square.y and pos[1] <= square.y1):
