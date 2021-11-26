@@ -494,11 +494,13 @@ class pub Checkers:
       rectfill(hCenter - (3*d) - 1, diffRowY - r, hCenter - d - 3, diffRowY + r)
     else:
       rect(hCenter - (3*d) - 1, diffRowY - r, hCenter - d - 3, diffRowY + r)
+
     setColor(4)
     if self.board.difficulty == Difficulty.medium:
       rectfill(hCenter - d - 2, diffRowY - r, hCenter + d + 2, diffRowY + r)
     else:
       rect(hCenter - d - 2, diffRowY - r, hCenter + d + 2, diffRowY + r)
+
     setColor(8)
     if self.board.difficulty == Difficulty.hard:
       rectfill(hCenter + d + 3, diffRowY - r, hCenter + (3*d) + 1, diffRowY + r)
@@ -507,19 +509,19 @@ class pub Checkers:
 
     setColor(7)
     if self.board.human == PieceColor.white:
-      rectfill(hCenter - d, playerRowY - r, hCenter, playerRowY + r)
+      rectfill(hCenter - 2*d, playerRowY - r, hCenter, playerRowY + r)
       setColor(0)
     else:
-      rect(hCenter - d, playerRowY - r, hCenter, playerRowY + r)
-    printc("O", hCenter - r + 1, playerRowY - 2)
+      rect(hCenter - 2*d, playerRowY - r, hCenter, playerRowY + r)
+    printc("white", hCenter - 2*r + 1, playerRowY - 2)
 
     setColor(7)
     if self.board.human == PieceColor.black:
-      rectfill(hCenter, playerRowY - r, hCenter + d, playerRowY + r)
+      rectfill(hCenter, playerRowY - r, hCenter + 2*d, playerRowY + r)
       setColor(0)
     else:
-      rect(hCenter, playerRowY - r, hCenter + d, playerRowY + r)
-    printc("X", hCenter + r + 1, playerRowY - 2)
+      rect(hCenter, playerRowY - r, hCenter + 2*d, playerRowY + r)
+    printc("black", hCenter + 2*r + 1, playerRowY - 2)
 
     setColor(7)
     printc("CHECKERS", hCenter, padding)

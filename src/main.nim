@@ -13,7 +13,7 @@ proc gameInit*() =
   loadFont(0, "font.png")
 
 proc gameDraw*() =
-  c.started = true
+  # c.started = true
   if not c.started:
     c.drawStartPage()
     c.drawHelpButton()
@@ -68,23 +68,23 @@ proc gameUpdate*(dt: float32) =
       pos = mouse()
 
       ## checks whether the click is within the bounds of the various buttons
-      if c.isInBounds(pos, newSquare(27, 44, 49, 56)):
+      if c.isInBounds(pos, newSquare(91, 44, 113, 56)):
         c.board.difficulty = Difficulty.easy
-      elif c.isInBounds(pos, newSquare(50, 44, 78, 56)):
+      elif c.isInBounds(pos, newSquare(114, 44, 142, 56)):
         c.board.difficulty = Difficulty.medium
-      elif c.isInBounds(pos, newSquare(79, 44, 101, 56)):
+      elif c.isInBounds(pos, newSquare(143, 44, 165, 56)):
         c.board.difficulty = Difficulty.hard
-      elif c.isInBounds(pos, newSquare(52, 74, 64, 86)):
+      elif c.isInBounds(pos, newSquare(128, 74, 152, 86)):
         c.board.human = PieceColor.white
         c.board.ai = PieceColor.black
         c.board.turn = c.board.human
-      elif c.isInBounds(pos, newSquare(64, 74, 76, 86)):
+      elif c.isInBounds(pos, newSquare(104, 74, 128, 86)):
         c.board.human = PieceColor.black
         c.board.ai = PieceColor.white
         c.board.turn = c.board.human
-      elif c.isInBounds(pos, newSquare(52, 102, 76, 114)):
+      elif c.isInBounds(pos, newSquare(116, 230, 140, 242)):
         c.started = true
-      elif c.isInBounds(pos, newSquare(118, 118, 125, 125)):
+      elif c.isInBounds(pos, newSquare(242, 242, 250, 250)):
         c.showRules = not c.showRules
   else:
     ## game logic
