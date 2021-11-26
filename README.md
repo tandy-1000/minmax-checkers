@@ -10,7 +10,7 @@ A simple minmax checkers game in Nim with [nico](https://github.com/ftsf/nico).
 - [x] Regicide
 - [x] Forced capture
 - [x] Multi-leg captures on same piece
-- [ ] Hint feature
+- [x] Hint feature
 - [ ] Rules page
 - [ ] Minimax AI with Alpha-Beta pruning
 - [x] Only allows legal moves with error messaging
