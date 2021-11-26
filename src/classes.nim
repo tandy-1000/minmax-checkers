@@ -330,6 +330,7 @@ class pub Board:
           if moves[0].jump:
             if moves.len == 1:
               self.move(moves[0], grid)
+              os.sleep(600)
           else:
             self.changeTurn()
         else:
