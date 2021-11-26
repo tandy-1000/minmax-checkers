@@ -252,6 +252,7 @@ class pub Board:
     elif move.isPossible(dimension = self.dimension):
       if grid[move.x1][move.y1].piece.isSome():
         let capture = self.getCapture(move, direction, grid)
+
         if capture.isSome():
           return @[capture.get()]
 
@@ -302,11 +303,11 @@ class pub Board:
           if self.grid[x][y].piece.get().potential:
             self.grid[x][y] = newGridSquare(GridColor.dark)
 
-  proc opposingPlayer*(player: PieceColor): PieceColor =
-    if player == PieceColor.black:
-      return PieceColor.white
-    elif player == PieceColor.white:
-      return PieceColor.black
+  proc changeTurn* =
+    if self.turn == PieceColor.black:
+      self.turn = PieceColor.white
+    elif self.turn == PieceColor.white:
+      self.turn = PieceColor.black
 
   proc move*(move: Move, grid: seq[seq[GridSquare]]) =
     ## Moves a piece on the grid, given a `Move` object. Can account for kings and jumps.
@@ -325,8 +326,12 @@ class pub Board:
         if grid[xMid][yMid].piece.get().king == true:
           grid[move.x1][move.y1].piece.get().king = true
         grid[xMid][yMid].piece = none(Piece)
+        let moves = self.getMoves(move.x1, move.y1, grid)
+        if moves.len > 0:
+          if moves[0].jump != true:
+            self.changeTurn()
       else:
-        self.turn = self.opposingPlayer(self.turn)
+        self.changeTurn()
 
   proc hasPlayerLost*(pieces: seq[tuple[x: int, y: int]]): bool =
     ## Returns true if a player has no pieces or moves left, otherwise false.
