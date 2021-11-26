@@ -44,7 +44,7 @@ jobs:
         run: nimble release
 
       - name: Create release zip
-        run: Compress-Archive -Path checkers.exe,SDL2.dll -DestinationPath checkers.zip
+        run: Compress-Archive -Path checkers.exe,SDL2.dll,assets -DestinationPath checkers.zip
 
       - name: Upload release
         uses: svenstaro/upload-release-action@v2
