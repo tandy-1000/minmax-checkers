@@ -310,7 +310,8 @@ class pub Board:
       self.turn = PieceColor.black
 
   proc move*(move: Move, grid: seq[seq[GridSquare]]) =
-    ## Moves a piece on the grid, given a `Move` object. Can account for kings and jumps.
+    ## Moves a piece on the grid, given a `Move` object and a grid.
+    ## Also changes the current turn, and can account for kings, multi-leg captures.
 
     if grid[move.x][move.y].piece.isSome():
       grid[move.x1][move.y1].piece = grid[move.x][move.y].piece
@@ -320,16 +321,19 @@ class pub Board:
         grid[move.x1][move.y1].piece.get().makeKing()
 
       if move.jump:
-        let
-          xMid = (move.x + move.x1) div 2
-          yMid = (move.y + move.y1) div 2
-        if grid[xMid][yMid].piece.get().king == true:
+        let midpoint = move.midpoint()
+        if grid[midpoint.x][midpoint.y].piece.get().king == true:
           grid[move.x1][move.y1].piece.get().king = true
-        grid[xMid][yMid].piece = none(Piece)
+        grid[midpoint.x][midpoint.y].piece = none(Piece)
         let moves = self.getMoves(move.x1, move.y1, grid)
-        if moves.len > 0:
-          if moves[0].jump != true:
+        if moves != @[]:
+          if moves[0].jump:
+            if moves.len == 1:
+              self.move(moves[0], grid)
+          else:
             self.changeTurn()
+        else:
+          self.changeTurn()
       else:
         self.changeTurn()
 
@@ -379,7 +383,7 @@ class pub Board:
     let
       moves = self.getPlayerMoves(self.ai, self.grid)
       randMove = sample moves
-    os.sleep(750)
+    os.sleep(600)
     self.move(randMove, self.grid)
 
 class pub Checkers:
