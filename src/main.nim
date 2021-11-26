@@ -34,7 +34,7 @@ proc gameDraw*() =
           setColor(3)
           rectfill(square.x, square.y, square.x1, square.y1)
         if c.board.grid[x][y].piece.isSome():
-          c.board.grid[x][y].piece.get().draw(square)
+          c.drawPiece(c.board.grid[x][y].piece.get(), square)
 
     c.drawHelpButton()
     # c.displayClues()

@@ -1,4 +1,4 @@
-import std/[options, random]
+import std/[os, options, random]
 import pkg/[nico, oolib]
 
 
@@ -34,42 +34,6 @@ class pub Piece:
   proc makeKing* =
     self.king = true
     self.directions = @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest]
-
-  proc draw*(gridBound: Square, offset = 5) =
-    let
-      x = gridBound.x + offset
-      y = gridBound.y + offset
-      x1 = gridBound.x1 - offset
-      y1 = gridBound.y1 - offset
-      x2 = (x1 + x) div 2
-      y2 = (y1 + y) div 2
-      rx = (gridBound.x1 - gridBound.x - offset) div 2
-      ry = (gridBound.y1 - gridBound.y - (offset div 2)) div 4
-
-    setColor(7)
-    if self.selected:
-      setColor(11)
-      ellipsefill(x2, y2, rx + 1, ry + 1)
-    elif self.potential:
-      setColor(5)
-    elif self.clue:
-      setColor(3)
-
-    if self.color == PieceColor.black:
-      setColor(4)
-      ellipsefill(x2, y2, rx, ry)
-      setColor(15)
-      ellipsefill(x2, y2 - 1, rx, ry - 1)
-
-    elif self.color == PieceColor.white:
-      setColor(6)
-      ellipsefill(x2, y2, rx, ry)
-      setColor(7)
-      ellipsefill(x2, y2 - (offset div 4), rx, ry - (offset div 4))
-
-    if self.king:
-      setColor(9)
-      printc("K", x2+1, y2-3)
 
 
 # func for checking equality between `Piece`s
@@ -410,7 +374,7 @@ class pub Board:
     let
       moves = self.getPlayerMoves(self.ai, self.grid)
       randMove = sample moves
-
+    os.sleep(750)
     self.move(randMove, self.grid)
 
 class pub Checkers:
@@ -423,6 +387,7 @@ class pub Checkers:
     selected* = none tuple[x: int, y: int]
     started* = false
     showRules* = false
+    showHints* = false
     showClues* = false
     outOfBounds* = false
     successfulMove* = true
@@ -442,6 +407,42 @@ class pub Checkers:
         x = x1
       y = y1
     self.gridSquare = newSquare(self.offset, self.offset, y, y)
+
+  proc drawPiece*(piece: Piece, gridBound: Square, offset = 5) =
+    let
+      x = gridBound.x + offset
+      y = gridBound.y + offset
+      x1 = gridBound.x1 - offset
+      y1 = gridBound.y1 - offset
+      x2 = (x1 + x) div 2
+      y2 = (y1 + y) div 2
+      rx = (gridBound.x1 - gridBound.x - offset) div 2
+      ry = (gridBound.y1 - gridBound.y - (offset div 2)) div 4
+
+    setColor(7)
+    if piece.selected:
+      setColor(11)
+      ellipsefill(x2, y2, rx + 1, ry + 1)
+    elif piece.potential and self.showHints:
+      setColor(5)
+    elif piece.clue:
+      setColor(3)
+
+    if piece.color == PieceColor.black:
+      setColor(4)
+      ellipsefill(x2, y2, rx, ry)
+      setColor(15)
+      ellipsefill(x2, y2 - 1, rx, ry - 1)
+
+    elif piece.color == PieceColor.white:
+      setColor(6)
+      ellipsefill(x2, y2, rx, ry)
+      setColor(7)
+      ellipsefill(x2, y2 - (offset div 4), rx, ry - (offset div 4))
+
+    if piece.king:
+      setColor(9)
+      printc("K", x2+1, y2-3)
 
   ## Returns a grid index from a mouse position
   proc xyToGrid*(pos: tuple[y: int, x: int]): (int, int) =  ((pos.x - self.offset) div self.size, (pos.y - self.offset) div self.size)
