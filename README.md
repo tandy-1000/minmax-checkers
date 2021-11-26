@@ -13,8 +13,7 @@ A simple minmax checkers game in Nim with [nico](https://github.com/ftsf/nico).
 - [ ] Hint feature
 - [ ] Rules page
 - [ ] Minimax AI with Alpha-Beta pruning
-- [x] Only allows legal moves
-   - [ ] with error messaging
+- [x] Only allows legal moves with error messaging
 
 ## Compilation
 Get SDL2 dll: `nimble deps`
