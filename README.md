@@ -2,7 +2,7 @@
 A simple minmax checkers game in Nim with [nico](https://github.com/ftsf/nico).
 
 ## Features
-- [ ] Selectable player color
+- [x] Selectable player color
 - [ ] Varying difficulty (varying minimax depth)
 - [ ] Click and drop
 - [x] Human-like AI move making
