@@ -1,4 +1,4 @@
-import std/options
+import std/[options, random]
 import pkg/[nico, oolib]
 
 
@@ -22,15 +22,18 @@ class pub Piece:
   var
     color*: PieceColor
     king*, selected*, potential*, clue*: bool
+    directions*: seq[Direction]
 
-  proc `new`(color: PieceColor, king, potential, clue: bool = false) =
+  proc `new`(color: PieceColor, directions: seq[Direction] = @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest], king, potential, clue: bool = false) =
     self.color = color
+    self.directions = directions
     self.king = king
     self.potential = potential
     self.clue = clue
 
   proc makeKing* =
     self.king = true
+    self.directions = @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest]
 
   proc draw*(gridBound: Square, offset = 5) =
     let
@@ -45,7 +48,8 @@ class pub Piece:
 
     setColor(7)
     if self.selected:
-      setColor(4):
+      setColor(11)
+      ellipsefill(x2, y2, rx + 1, ry + 1)
     elif self.potential:
       setColor(5)
     elif self.clue:
@@ -101,6 +105,22 @@ class pub Move:
     if self.x > -1 and self.x < dimension and self.y > -1 and self.y < dimension and self.x1 > -1 and self.x1 < dimension and self.y1 > -1 and self.y1 < dimension:
       return true
 
+  proc getDir*: Option[Direction] =
+    ## Returns a Direction for a given `Move` object.
+
+    let
+      xDiff = self.x1 - self.x
+      yDiff = self.y1 - self.y
+
+    if xDiff == -1 and yDiff == 1:
+      return some Direction.northEast
+    elif xDiff == -1 and yDiff == -1:
+      return some Direction.northWest
+    elif xDiff == 1 and yDiff == 1:
+      return some Direction.southEast
+    elif xDiff == 1 and yDiff == -1:
+      return some Direction.southWest
+
   proc midpoint*: tuple[x: int, y: int] =
     ## Returns the midpoint of a jump move.
 
@@ -108,7 +128,16 @@ class pub Move:
       let
         x = (self.x + self.x1) div 2
         y = (self.y + self.y1) div 2
+
       return (x, y)
+
+  proc isCapture* =
+    ## Updates `jump` according to whether the move is a capture or not.
+
+    if abs(self.x - self.x1) <= 1 and abs(self.y - self.y1) <= 1:
+      self.jump = false
+    else:
+      self.jump = true
 
 
 # func for checking equality between `Move`s
@@ -136,6 +165,7 @@ proc debugMove*(move: Move): string =
 proc debugMoves*(moves: seq[Move]): string =
   for move in moves:
     echo debugMove move
+    echo ""
 
 proc debugGrid*(grid: seq[seq[GridSquare]]): string =
   for x in 0 ..< grid.len:
@@ -177,11 +207,20 @@ class pub Board:
           self.grid[x].add newGridSquare(GridColor.light)
         else:
           if x >= 0 and x < populate:
-            self.grid[x].add newGridSquare(GridColor.dark, some newPiece(color = self.ai))
+            self.grid[x].add newGridSquare(GridColor.dark, some newPiece(color = self.ai, @[Direction.southEast, Direction.southWest]))
           elif x >= self.dimension - populate and x < self.dimension:
-            self.grid[x].add newGridSquare(GridColor.dark, some newPiece(color = self.human))
+            self.grid[x].add newGridSquare(GridColor.dark, some newPiece(color = self.human, @[Direction.northEast, Direction.northWest]))
           else:
             self.grid[x].add newGridSquare(GridColor.dark)
+
+  proc getPlayerPieces*(player: PieceColor, grid: seq[seq[GridSquare]]): seq[tuple[x: int, y: int]] =
+    ## Returns a sequence of coordinates for each piece a given player has on the grid
+
+    for x in 0 ..< self.dimension:
+      for y in 0 ..< self.dimension:
+        if grid[x][y].piece.isSome():
+          if grid[x][y].piece.get().color == player:
+            result.add (x, y)
 
   proc nextSquare*(x, y: int, direction: Direction): Move =
     ## Returns a `Move` object for a given direction and coordinate.
@@ -206,29 +245,37 @@ class pub Board:
 
     return newMove(x, y, x1, y1)
 
-  proc getJump*(move: Move): Move =
+  proc getJump*(move: Move, direction: Direction): Move =
     ## Returns a jump move, one grid square ahead of the current move.
-    let
-      x1 = move.x1 + (move.x1 - move.x)
-      y1 = move.y1 + (move.y1 - move.y)
 
-    return newMove(move.x, move.y, x1, y1, jump = true)
+    var newMove = self.nextSquare(move.x1, move.y1, direction)
+    newMove.x = move.x
+    newMove.y = move.y
+    newMove.jump = true
+
+    return newMove
 
   proc isMoveLegal*(move: Move, grid: seq[seq[GridSquare]]): bool =
+    ## Returns true if a move is possible.
+
     if move.isPossible(dimension = self.dimension):
       if move.jump:
         if grid[move.x][move.y].piece.isSome() and grid[move.x1][move.y1].piece.isNone():
           let (xMid, yMid) = move.midpoint()
-          if grid[xMid][yMid].piece.get().color != grid[move.x][move.y].piece.get().color:
-            return true
+          if grid[xMid][yMid].piece.isSome():
+            if grid[xMid][yMid].piece.get().color != grid[move.x][move.y].piece.get().color:
+              return true
       else:
         if grid[move.x1][move.y1].piece.isNone():
-          return true
+          let dir = move.getDir()
+          if dir.isSome():
+            if dir.get() in grid[move.x][move.y].piece.get().directions:
+              return true
 
-  proc getCapture*(move: Move, grid: seq[seq[GridSquare]]): Option[Move] =
+  proc getCapture*(move: Move, direction: Direction, grid: seq[seq[GridSquare]]): Option[Move] =
     ## Returns a `Move` object if a capture is possible.
 
-    let capture = self.getJump(move)
+    let capture = self.getJump(move, direction)
     if self.isMoveLegal(capture, grid):
       return some capture
 
@@ -237,42 +284,50 @@ class pub Board:
 
     let move = self.nextSquare(x, y, direction)
     if self.isMoveLegal(move, grid):
-      result.add move
+      return @[move]
     elif move.isPossible(dimension = self.dimension):
       if grid[move.x1][move.y1].piece.isSome():
-        let capture = self.getCapture(move, grid)
+        let capture = self.getCapture(move, direction, grid)
         if capture.isSome():
-          result.add capture.get()
+          return @[capture.get()]
 
   proc getMoves*(x, y: int, grid: seq[seq[GridSquare]]): seq[Move] =
-    ## Returns a sequence of `Move` objects for a given coordinate, including captures
+    ## Returns a sequence of `Move` objects for a given coordinate.
+    ## If captures are available, only they are returned.
+
+    var
+      moves, captures: seq[Move]
 
     if grid[x][y].piece.isSome():
-      if grid[x][y].piece.get().color == self.human and grid[x][y].piece.get().king == false:
-        for direction in {Direction.northEast, Direction.northWest}:
-          result &= self.getMove(x, y, direction, grid)
-      elif grid[x][y].piece.get().color == self.ai and grid[x][y].piece.get().king == false:
-        for direction in {Direction.southEast, Direction.southWest}:
-          result &= self.getMove(x, y, direction, grid)
-      else:
-        for direction in {Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest}:
-          result &= self.getMove(x, y, direction, grid)
+      for direction in grid[x][y].piece.get().directions:
+        for move in self.getMove(x, y, direction, grid):
+          if move.jump == true:
+            captures &= move
+          else:
+            moves &= move
 
-  proc getPlayerPieces*(player: PieceColor, grid: seq[seq[GridSquare]]): seq[tuple[x: int, y: int]] =
-    ## Returns a sequence of coordinates for each piece a given player has on the grid
-
-    for x in 0 ..< self.dimension:
-      for y in 0 ..< self.dimension:
-        if grid[x][y].piece.isSome():
-          if grid[x][y].piece.get().color == player:
-            result.add (x, y)
+    if captures.len > 0:
+      return captures
+    else:
+      return moves
 
   proc getPlayerMoves*(player: PieceColor, grid: seq[seq[GridSquare]]): seq[Move] =
-    ## Returns a sequence of `Move`s for each move a given player can make on the grid
+    ## Returns a sequence of `Move`s for each move a given player can make on the grid.
 
-    let pieces = self.getPlayerPieces(player, grid)
-    for (x, y) in pieces:
-      result &= self.getMoves(x, y, grid)
+    var
+      moves, captures: seq[Move]
+
+    for (x, y) in self.getPlayerPieces(player, grid):
+      for move in self.getMoves(x, y, grid):
+        if move.jump == true:
+          captures &= move
+        else:
+          moves &= move
+
+    if captures.len > 0:
+      return captures
+    else:
+      return moves
 
   proc cleanGrid* =
     ## Removes "potential" pieces from the grid, which are placed when a mouse hovers on the grid when a piece is selected.
@@ -349,6 +404,14 @@ class pub Board:
 
     return (gameOver, winner)
 
+  proc moveAI* =
+    ## Makes random moves.
+
+    let
+      moves = self.getPlayerMoves(self.ai, self.grid)
+      randMove = sample moves
+
+    self.move(randMove, self.grid)
 
 class pub Checkers:
   var
@@ -357,6 +420,7 @@ class pub Checkers:
     board*: Board
     offset* = 32
     size* = 24
+    selected* = none tuple[x: int, y: int]
     started* = false
     showRules* = false
     showClues* = false
@@ -380,7 +444,33 @@ class pub Checkers:
     self.gridSquare = newSquare(self.offset, self.offset, y, y)
 
   ## Returns a grid index from a mouse position
-  proc xyToGrid*(pos: (int, int)): (int, int) =  ((pos[1] - self.offset) div self.size, (pos[0] - self.offset) div self.size)
+  proc xyToGrid*(pos: tuple[y: int, x: int]): (int, int) =  ((pos.x - self.offset) div self.size, (pos.y - self.offset) div self.size)
+
+  proc deselect*(selection: tuple[x: int, y: int]) =
+    self.board.grid[selection.x][selection.y].piece.get().selected = false
+    self.selected = none tuple[x: int, y: int]
+
+  proc select*(selection: tuple[x: int, y: int]) =
+    ## Selects a piece
+
+    let (x, y) = selection
+
+    if self.selected.isNone():
+      if self.board.grid[x][y].piece.isSome():
+        if self.board.grid[x][y].piece.get().color == self.board.turn:
+          self.board.grid[x][y].piece.get().selected = true
+          self.selected = some selection
+    else:
+      if self.board.grid[x][y].piece.isSome():
+        if self.board.grid[x][y].piece.get().color == self.board.turn:
+          self.deselect (self.selected.get().x, self.selected.get().y)
+          self.select (x, y)
+      else:
+        var move = newMove(self.selected.get().x, self.selected.get().y, x, y)
+        move.isCapture()
+        if move in self.board.getPlayerMoves(self.board.human, self.board.grid):
+          self.deselect (move.x, move.y)
+          self.board.move(move, self.board.grid)
 
   proc drawStartPage* =
     cls()
@@ -444,9 +534,9 @@ class pub Checkers:
 
   proc drawHelpButton* =
     setColor(7)
-    boxfill(118, 118, 7, 7)
+    boxfill(246, 246, 7, 7)
     setColor(0)
-    printc("?", 122, 119)
+    printc("?", 250, 247)
 
   # proc displayClues* =
   #   if self.showClues:
