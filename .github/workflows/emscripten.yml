@@ -6,50 +6,51 @@ on:
       - "src/*"
 
 jobs:
-  strategy:
-    fail-fast: false
+  build:
+    strategy:
+      fail-fast: false
 
-  runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
 
-  defaults:
-    run:
-      working-directory: minmax-checkers
+    defaults:
+      run:
+        working-directory: minmax-checkers
 
-  steps:
-    - name: Checkout
-      uses: actions/checkout@v2.4.0
-      with:
-        path: minmax-checkers
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.4.0
+        with:
+          path: minmax-checkers
 
-    - name: Setup emscripten
-      uses: mymindstorm/setup-emsdk@v11
+      - name: Setup emscripten
+        uses: mymindstorm/setup-emsdk@v11
 
-    - name: Setup Nim
-      uses: alaviss/setup-nim@0.1.1
-      with:
-        path: nim
-        version: ${{ matrix.branch }}
+      - name: Setup Nim
+        uses: alaviss/setup-nim@0.1.1
+        with:
+          path: nim
+          version: ${{ matrix.branch }}
 
-    - name: Get SDL
-      run: nimble deps
+      - name: Get SDL
+        run: nimble deps
 
-    - name: Install dependencies
-      run: nimble install -y --depsOnly
+      - name: Install dependencies
+        run: nimble install -y --depsOnly
 
-    - name: Compile release build
-      run: nimble webr && ls -la
+      - name: Compile release build
+        run: nimble webr && ls -la
 
-    - name: Commit web build
-      uses: EndBug/add-and-commit@v4  # Commit everything to Git repo
-      with:
-        add: 'mminmax-checkers/build'
-        force: true
-        message: 'Latest web build'
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Commit web build
+        uses: EndBug/add-and-commit@v4  # Commit everything to Git repo
+        with:
+          add: 'mminmax-checkers/build'
+          force: true
+          message: 'Latest web build'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Deploy 🚀
-      uses: JamesIves/github-pages-deploy-action@4.1.7
-      with:
-        branch: main # The branch the action should deploy to.
-        folder: build # The folder the action should deploy.
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@4.1.7
+        with:
+          branch: main # The branch the action should deploy to.
+          folder: build # The folder the action should deploy.
