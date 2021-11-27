@@ -27,7 +27,9 @@ task release, "Builds checkers for current platform":
  exec &"nim c {releaseOpts} -o:checkers src/main.nim"
 
 task webd, "Builds debug checkers for web":
- exec &"nim c {debugOpts} -d:emscripten -o:checkers.html src/main.nim"
+ exec &"nim c {debugOpts} -d:emscripten -o:build/checkers.html src/main.nim"
+ exec &"mv -t build checkers.data checkers.html checkers.wasm checkers.js"
+ exec &"rm -rf tmp"
 
 task webr, "Builds release checkers for web":
  exec &"nim c {releaseOpts} -d:emscripten -o:checkers.html src/main.nim"
