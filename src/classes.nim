@@ -110,13 +110,6 @@ class pub Move:
     else:
       self.jump = true
 
-  proc copy*: Move =
-    result = newMove(0,0,0,0)
-    result.x = self.x
-    result.y = self.y
-    result.x1 = self.x1
-    result.y1 = self.y1
-
 
 # func for checking equality between `Move`s
 func `==`*(a, b: Move): bool =
@@ -292,7 +285,6 @@ class pub Board:
 
   proc getPlayerMoves*(player: PieceColor, grid: seq[seq[GridSquare]]): seq[Move] =
     ## Returns a sequence of `Move`s for each move a given player can make on the grid.
-
     var
       moves, captures: seq[Move]
 
@@ -348,21 +340,13 @@ class pub Board:
               sleep(600)
               self.move(moves[0], grid)
 
-  proc hasPlayerLost*(pieces: seq[tuple[x: int, y: int]]): bool =
+  proc hasPlayerLost*(player: PieceColor, grid: seq[seq[GridSquare]]): bool =
     ## Returns true if a player has no pieces or moves left, otherwise false.
 
-    if pieces.len > 0:
-      var moves: seq[Move]
-
-      for (x, y) in pieces:
-        moves &= self.getMoves(x, y, self.grid)
-
-      if moves.len > 0:
-        return false
-      else:
-        return true
-    else:
+    if self.getPlayerMoves(player, grid) == @[]:
       return true
+    else:
+      return false
 
   proc isGameOver*(grid: seq[seq[GridSquare]]): (bool, Option[PieceColor]) =
     ## Returns `(gameOver, Option[PieceColor])`.
@@ -374,17 +358,15 @@ class pub Board:
       winner = none PieceColor
 
     let
-      humanLoss = self.hasPlayerLost(self.getPlayerPieces(self.human, grid))
-      aiLoss = self.hasPlayerLost(self.getPlayerPieces(self.ai, grid))
+      humanLoss = self.hasPlayerLost(self.human, grid)
+      aiLoss = self.hasPlayerLost(self.ai, grid)
 
-    if humanLoss and aiLoss:
+    if humanLoss or aiLoss:
       gameOver = true
-    elif not humanLoss and aiLoss:
-      gameOver = true
-      winner = some self.human
-    elif humanLoss and not aiLoss:
-      gameOver = true
-      winner = some self.ai
+      if humanLoss:
+        winner = some self.ai
+      elif aiLoss:
+        winner = some self.human
 
     return (gameOver, winner)
 
@@ -446,9 +428,15 @@ class pub Board:
         # if depth == ord self.difficulty:
         #   break
         currentMove = self.minimax(self.opposingPlayer(player), gridCopy, depth + 1, false, alpha, beta)
-        currentMove = move.copy()
+        currentMove.x = move.x
+        currentMove.y = move.y
+        currentMove.x1 = move.x1
+        currentMove.y1 = move.y1
         if maxMove.x == -1 or currentMove.score > maxMove.score:
-          maxMove = currentMove.copy()
+          maxMove.x = currentMove.x
+          maxMove.y = currentMove.y
+          maxMove.x1 = currentMove.x1
+          maxMove.y1 = currentMove.y1
           maxMove.score = currentMove.score
           maxMove.depth = depth
           alpha = max(currentMove.score, alpha)
@@ -463,9 +451,15 @@ class pub Board:
         # if depth == ord self.difficulty:
         #   break
         currentMove = self.minimax(self.opposingPlayer(player), gridCopy, depth + 1, true, alpha, beta)
-        currentMove = move.copy()
+        currentMove.x = move.x
+        currentMove.y = move.y
+        currentMove.x1 = move.x1
+        currentMove.y1 = move.y1
         if minMove.x == -1 or currentMove.score < minMove.score:
-          minMove = currentMove.copy()
+          minMove.x = currentMove.x
+          minMove.y = currentMove.y
+          minMove.x1 = currentMove.x1
+          minMove.y1 = currentMove.y1
           minMove.score = currentMove.score
           minMove.depth = depth
           beta = min(currentMove.score, beta)
@@ -481,15 +475,6 @@ class pub Board:
     let move = self.minimax(self.ai, self.grid, depth = 0, true, alpha = low(BiggestInt), beta = high(BiggestInt))
     sleep(600)
     self.move(move, self.grid)
-
-  # proc randMoveAI* =
-  #   ## Makes random moves.
-
-  #   let
-  #     moves = self.getPlayerMoves(self.ai, self.grid)
-  #     randMove = sample moves
-  #   os.sleep(600)
-  #   self.move(randMove, self.grid)
 
 
 class pub Checkers:
