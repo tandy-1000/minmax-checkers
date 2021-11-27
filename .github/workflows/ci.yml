@@ -9,10 +9,7 @@ jobs:
   build:
     strategy:
       fail-fast: false
-      matrix:
-        branch: [devel]
 
-    name: 'Nim ${{ matrix.branch }}'
     runs-on: ubuntu-latest
 
     defaults:
@@ -30,7 +27,7 @@ jobs:
         uses: alaviss/setup-nim@0.1.1
         with:
           path: nim
-          version: ${{ matrix.branch }}
+          version: devel
 
       - name: Get SDL
         run: sudo apt-get install libsdl2-2.0
