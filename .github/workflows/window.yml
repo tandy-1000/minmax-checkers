@@ -12,9 +12,9 @@ jobs:
 
     runs-on: windows-latest
 
-    defaults:
-      run:
-        working-directory: minmax-checkers
+    # defaults:
+    #   run:
+    #     working-directory: minmax-checkers
 
     steps:
       - name: Checkout
