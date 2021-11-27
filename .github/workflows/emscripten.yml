@@ -1,4 +1,4 @@
-name: Emscripten deployment
+name: Web build
 on:
   push:
     paths:
