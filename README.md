@@ -1,4 +1,4 @@
-# minmax-checkers [![CI](https://github.com/tandy-1000/minmax-checkers/actions/workflows/ci.yml/badge.svg)](https://github.com/tandy-1000/minmax-checkers/actions/workflows/ci.yml) [![Windows build](https://github.com/tandy-1000/minmax-checkers/actions/workflows/window.yml/badge.svg)](https://github.com/tandy-1000/minmax-checkers/actions/workflows/window.yml)
+# minmax-checkers [![CI](https://github.com/tandy-1000/minmax-checkers/actions/workflows/ci.yml/badge.svg)](https://github.com/tandy-1000/minmax-checkers/actions/workflows/ci.yml) [![Windows build](https://github.com/tandy-1000/minmax-checkers/actions/workflows/window.yml/badge.svg)](https://github.com/tandy-1000/minmax-checkers/actions/workflows/window.yml) [![Emscripten deployment](https://github.com/tandy-1000/minmax-checkers/actions/workflows/emscripten.yml/badge.svg)](https://github.com/tandy-1000/minmax-checkers/actions/workflows/emscripten.yml)
 A simple minmax checkers game in Nim with [nico](https://github.com/ftsf/nico).
 
 ## Features
