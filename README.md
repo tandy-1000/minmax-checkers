@@ -13,7 +13,7 @@ A simple minmax checkers game in Nim with [nico](https://github.com/ftsf/nico).
 - [x] Forced capture
 - [x] Multi-leg captures on same piece
 - [x] Hint feature
-- [ ] Minimax AI with Alpha-Beta pruning
+- [x] Minimax AI with Alpha-Beta pruning
 - [x] Human-like AI move making
 - [ ] Rules page
 
