@@ -1,4 +1,4 @@
-import std/[random, options]
+import std/options
 import pkg/nico
 import classes
 
@@ -7,7 +7,6 @@ const
   appName* = "Checkers"
 
 var c = newCheckers(difficulty = Difficulty.medium)
-randomize()
 
 proc gameInit*() =
   loadFont(0, "font.png")
@@ -125,8 +124,12 @@ proc gameUpdate*(dt: float32) =
           c.outOfBounds = false
           c.select c.xyToGrid(pos)
           c.board.cleanGrid()
+      if c.successfulMove:
+        c.board.changeTurn()
+        c.successfulMove = false
     elif c.board.turn == c.board.ai and c.board.gameOver == false:
       c.board.moveAI()
+      c.board.changeTurn()
 
 
 nico.init(orgName, appName)
