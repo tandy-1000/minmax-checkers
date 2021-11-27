@@ -340,7 +340,6 @@ suite "Board":
           newGridSquare(GridColor.light)
         ]
       ]
-    board.grid = grid
     board.turn = board.ai
-    let move = board.minimax(board.ai, board.grid, depth = 0, true, alpha = low(BiggestInt), beta = high(BiggestInt))
+    let move = board.minimax(board.ai, grid, depth = 0, maximising = true, alpha = low(BiggestInt), beta = high(BiggestInt))
     check move == newMove(0, 1, 2, 3, jump = true)
