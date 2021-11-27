@@ -278,7 +278,7 @@ class pub Board:
           else:
             moves &= move
 
-    if captures.len > 0:
+    if captures != @[]:
       return captures
     else:
       return moves
@@ -295,7 +295,7 @@ class pub Board:
         else:
           moves &= move
 
-    if captures.len > 0:
+    if captures != @[]:
       return captures
     else:
       return moves
@@ -370,30 +370,6 @@ class pub Board:
 
     return (gameOver, winner)
 
-  # proc evaluatePieces*(
-  #   coords: seq[tuple[x: int, y: int]],
-  #   grid: seq[seq[GridSquare]]
-  # ): tuple[pieces: int, kings: int] =
-  #   var
-  #     pieces, kings = 0
-  #   for (x, y) in coords:
-  #     if grid[x][y].piece.get().king:
-  #       inc pieces
-  #     else:
-  #       inc kings
-  #   return (pieces, kings)
-
-  # proc evaluate*(
-  #   maximisingPieces, minimisingPieces: seq[tuple[x: int, y: int]],
-  #   grid: seq[seq[GridSquare]]
-  # ): int =
-
-  #   let
-  #     (maxPieces, maxKings) = self.evaluatePieces(maximisingPieces, grid)
-  #     (minPieces, minKings) = self.evaluatePieces(minimisingPieces, grid)
-
-  #   return (maxPieces - minPieces) + ((maxKings - minKings) div 2)
-
   proc minimax*(
     player: PieceColor,
     grid: seq[seq[GridSquare]],
@@ -403,9 +379,9 @@ class pub Board:
   ): Move =
     var
       gridCopy: seq[seq[GridSquare]]
-      minMove = newMove(-1, -1, -1, -1, score = beta)
-      maxMove = newMove(-1, -1, -1, -1, score = alpha)
-      currentMove: Move
+      minMove = newMove(-1, -1, -1, -1, score = beta, depth = depth)
+      maxMove = newMove(-1, -1, -1, -1, score = alpha, depth = depth)
+      currentMove = newMove(-1, -1, -1, -1, score = 0, depth = depth)
       alpha = alpha
       beta = beta
 
@@ -421,13 +397,14 @@ class pub Board:
         return newMove(-1, -1, -1, -1, score = 0, depth = depth)
 
     if maximising:
+      echo "maximising"
       for move in self.getPlayerMoves(player, grid):
         gridCopy = deepcopy(grid)
         self.move(move, gridCopy)
 
         # if depth == ord self.difficulty:
         #   break
-        currentMove = self.minimax(self.opposingPlayer(player), gridCopy, depth + 1, false, alpha, beta)
+        currentMove = self.minimax(self.opposingPlayer(player), gridCopy, depth + 1, not maximising, alpha, beta)
         currentMove.x = move.x
         currentMove.y = move.y
         currentMove.x1 = move.x1
@@ -440,17 +417,20 @@ class pub Board:
           maxMove.score = currentMove.score
           maxMove.depth = depth
           alpha = max(currentMove.score, alpha)
+          echo "max move"
+          echo debugMove maxMove
 
         if alpha >= beta:
           break
     else:
+      echo "minimising"
       for move in self.getPlayerMoves(player, grid):
         gridCopy = deepcopy(grid)
         self.move(move, gridCopy)
 
         # if depth == ord self.difficulty:
         #   break
-        currentMove = self.minimax(self.opposingPlayer(player), gridCopy, depth + 1, true, alpha, beta)
+        currentMove = self.minimax(self.opposingPlayer(player), gridCopy, depth + 1, not maximising, alpha, beta)
         currentMove.x = move.x
         currentMove.y = move.y
         currentMove.x1 = move.x1
@@ -463,6 +443,8 @@ class pub Board:
           minMove.score = currentMove.score
           minMove.depth = depth
           beta = min(currentMove.score, beta)
+          echo "min move"
+          echo debugMove minMove
 
         if alpha >= beta:
           break
@@ -472,9 +454,11 @@ class pub Board:
 
   proc moveAI* =
     ## Makes best move
-    let move = self.minimax(self.ai, self.grid, depth = 0, true, alpha = low(BiggestInt), beta = high(BiggestInt))
+
+    let move = self.minimax(self.ai, self.grid, depth = 0, maximising = true, alpha = low(BiggestInt), beta = high(BiggestInt))
     sleep(600)
     self.move(move, self.grid)
+    self.changeTurn()
 
 
 class pub Checkers:
@@ -490,7 +474,7 @@ class pub Checkers:
     showHints* = true
     showClues* = false
     outOfBounds* = false
-    successfulMove* = false
+    successfulMove* = true
 
   proc `new`(difficulty: Difficulty): Checkers =
     self.board = newBoard(difficulty = difficulty)
@@ -539,7 +523,6 @@ class pub Checkers:
       setColor(9)
       printc("K", x2 + 1, y2 - 3)
 
-
   ## Returns a grid index from a mouse position
   proc xyToGrid*(pos: tuple[y: int, x: int]): (int, int) =  ((pos.x - self.offset) div self.size, (pos.y - self.offset) div self.size)
 
@@ -568,6 +551,7 @@ class pub Checkers:
         if move in self.board.getPlayerMoves(self.board.human, self.board.grid):
           self.deselect (move.x, move.y)
           self.board.move(move, self.board.grid)
+          self.board.changeTurn()
           self.successfulMove = true
         else:
           self.successfulMove = false

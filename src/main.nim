@@ -79,13 +79,10 @@ proc gameUpdate*(dt: float32) =
       elif c.isInBounds(pos, newSquare(155, 63, 201, 87)):
         c.board.difficulty = Difficulty.hard
       elif c.isInBounds(pos, newSquare(80, 108, 128, 132)):
-        c.board.human = PieceColor.white
-        c.board.ai = PieceColor.black
-        c.board.turn = c.board.human
+        c.board = newBoard(human = PieceColor.white, ai = PieceColor.black, difficulty = c.board.difficulty)
+        echo "done"
       elif c.isInBounds(pos, newSquare(128, 108, 176, 132)):
-        c.board.human = PieceColor.black
-        c.board.ai = PieceColor.white
-        c.board.turn = c.board.human
+        c.board = newBoard(human = PieceColor.black, ai = PieceColor.white, difficulty = c.board.difficulty)
       elif c.isInBounds(pos, newSquare(104, 204, 152, 228)):
         c.started = true
       elif c.isInBounds(pos, newSquare(242, 242, 250, 250)):
@@ -96,17 +93,19 @@ proc gameUpdate*(dt: float32) =
         c.showHints = false
   else:
     c.board.cleanGrid()
-    ## game logic
     (c.board.gameOver, c.board.gameResult) = c.board.isGameOver(c.board.grid)
+    ## Human turn
     if c.board.turn == c.board.human and c.board.gameOver == false:
-
       pos = mouse()
-      if not c.isOutOfBounds(pos, c.gridSquare) and c.selected.isSome():
-        let (x, y) = c.xyToGrid(pos)
-        if c.board.grid[x][y].color == GridColor.dark and c.board.grid[x][y].piece.isNone():
-          let potentialMoves = c.board.getMoves(c.selected.get().x, c.selected.get().y, c.board.grid)
-          if newMove(c.selected.get().x, c.selected.get().y, x, y) in potentialMoves:
-            c.board.grid[x][y].potential = true
+
+      ## Shows hint on hover
+      if c.showHints:
+        if not c.isOutOfBounds(pos, c.gridSquare) and c.selected.isSome():
+          let (x, y) = c.xyToGrid(pos)
+          if c.board.grid[x][y].color == GridColor.dark and c.board.grid[x][y].piece.isNone():
+            let potentialMoves = c.board.getMoves(c.selected.get().x, c.selected.get().y, c.board.grid)
+            if newMove(c.selected.get().x, c.selected.get().y, x, y) in potentialMoves:
+              c.board.grid[x][y].potential = true
 
       pressed = mousebtnp(0)
       if pressed:
@@ -124,12 +123,8 @@ proc gameUpdate*(dt: float32) =
           c.outOfBounds = false
           c.select c.xyToGrid(pos)
           c.board.cleanGrid()
-      if c.successfulMove:
-        c.board.changeTurn()
-        c.successfulMove = false
     elif c.board.turn == c.board.ai and c.board.gameOver == false:
       c.board.moveAI()
-      c.board.changeTurn()
 
 
 nico.init(orgName, appName)
