@@ -206,107 +206,141 @@ suite "Board":
     moves = boardSix.getPlayerMoves(PieceColor.black, boardSix.grid)
     ## move black player, should make capture
     boardSix.move(moves[0], boardSix.grid)
+    boardSix.changeTurn()
     ## check assertion that generated move is correct and turn is set correctly
     assertion = moves == @[newMove(0, 3, 2, 1, jump = true)] and boardSix.turn == boardSix.ai
     check assertion
 
-  # test "Forced capture and regicide":
-  #   let
-  #     grid = @[
-  #       @[
-  #         newGridSquare(GridColor.light),
-  #         newGridSquare(GridColor.dark, some newPiece(PieceColor.white, @[Direction.southEast, Direction.southWest])),
-  #         newGridSquare(GridColor.light),
-  #         newGridSquare(GridColor.dark, some newPiece(PieceColor.black, @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest], king = true))
-  #       ],
-  #       @[
-  #         newGridSquare(GridColor.dark),
-  #         newGridSquare(GridColor.light),
-  #         newGridSquare(GridColor.dark),
-  #         newGridSquare(GridColor.light)
-  #       ],
-  #       @[
-  #         newGridSquare(GridColor.light),
-  #         newGridSquare(GridColor.dark),
-  #         newGridSquare(GridColor.light),
-  #         newGridSquare(GridColor.dark)],
-  #       @[
-  #         newGridSquare(GridColor.dark),
-  #         newGridSquare(GridColor.light),
-  #         newGridSquare(GridColor.dark, some newPiece(PieceColor.black, @[Direction.northEast, Direction.northWest])),
-  #         newGridSquare(GridColor.light)
-  #       ]
-  #     ]
-  #   board.move(board.nextSquare(0, 3, Direction.southWest), grid)
-  #   let moves = board.getMoves(0, 1, grid)
-  #   board.move(moves[0], grid)
-  #   check grid[2][3].piece.get().king == true and moves.len == 1
+  test "Forced capture and regicide":
+    let
+      grid = @[
+        @[
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.white, @[Direction.southEast, Direction.southWest])),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.black, @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest], king = true))
+        ],
+        @[
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light)
+        ],
+        @[
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark)],
+        @[
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.black, @[Direction.northEast, Direction.northWest])),
+          newGridSquare(GridColor.light)
+        ]
+      ]
+    board.move(board.nextSquare(0, 3, Direction.southWest), grid)
+    let moves = board.getMoves(0, 1, grid)
+    board.move(moves[0], grid)
+    check grid[2][3].piece.get().king == true and moves.len == 1
 
-  # test "Get moves (king)":
-  #   check board.getMoves(0, 3, board.grid) == @[newMove(0, 3, 1, 2)]
+  test "Get moves (king)":
+    check board.getMoves(0, 3, board.grid) == @[newMove(0, 3, 1, 2)]
 
-  # test "Get moves (top, white)":
-  #   check board.getMoves(0, 1, board.grid) == @[newMove(0, 1, 1, 2), newMove(0, 1, 1, 0)]
+  test "Get moves (top, white)":
+    check board.getMoves(0, 1, board.grid) == @[newMove(0, 1, 1, 2), newMove(0, 1, 1, 0)]
 
-  # test "Get moves (bottom, black":
-  #   check board.getMoves(3, 2, board.grid) == @[newMove(3, 2, 2, 3), newMove(3, 2, 2, 1)]
+  test "Get moves (bottom, black":
+    check board.getMoves(3, 2, board.grid) == @[newMove(3, 2, 2, 3), newMove(3, 2, 2, 1)]
 
-  # test "Get player pieces (ai & human)":
-  #   let
-  #     humanPieces = board.getPlayerPieces(board.human, board.grid)
-  #     aiPieces = board.getPlayerPieces(board.ai, board.grid)
-  #   check humanPieces == @[(0, 3), (3, 2)] and aiPieces == @[(0, 1)]
+  test "Get player pieces (ai & human)":
+    let
+      humanPieces = board.getPlayerPieces(board.human, board.grid)
+      aiPieces = board.getPlayerPieces(board.ai, board.grid)
+    check humanPieces == @[(0, 3), (3, 2)] and aiPieces == @[(0, 1)]
 
-  # test "Get player moves (ai)":
-  #   check board.getPlayerMoves(board.ai, board.grid) == @[newMove(0, 1, 1, 2), newMove(0, 1, 1, 0)]
+  test "Get player moves (ai)":
+    check board.getPlayerMoves(board.ai, board.grid) == @[newMove(0, 1, 1, 2), newMove(0, 1, 1, 0)]
 
-  # test "Get player moves (human)":
-  #   let assertion = board.getPlayerMoves(board.human, board.grid) == @[newMove(0, 3, 1, 2), newMove(3, 2, 2, 3), newMove(3, 2, 2, 1)]
-  #   check assertion
+  test "Get player moves (human)":
+    let assertion = board.getPlayerMoves(board.human, board.grid) == @[newMove(0, 3, 1, 2), newMove(3, 2, 2, 3), newMove(3, 2, 2, 1)]
+    check assertion
 
-  # test "Has player lost (human)":
-  #   check board.hasPlayerLost(board.getPlayerPieces(board.human, board.grid)) == false
+  test "Has player lost (human)":
+    check board.hasPlayerLost(board.getPlayerPieces(board.human, board.grid)) == false
 
-  # test "Has player lost (ai)":
-  #   check board.hasPlayerLost(board.getPlayerPieces(board.ai, board.grid)) == false
+  test "Has player lost (ai)":
+    check board.hasPlayerLost(board.getPlayerPieces(board.ai, board.grid)) == false
 
-  # test "Game Over (false, no winner)":
-  #   let (gameOver, winner) = board.isGameOver(board.grid)
-  #   check gameOver == false and winner == none PieceColor
+  test "Game Over (false, no winner)":
+    let (gameOver, winner) = board.isGameOver(board.grid)
+    check gameOver == false and winner == none PieceColor
 
-  # test "Game Over (true, human winner)":
-  #   board.move(board.nextSquare(0, 1, Direction.southEast), board.grid)
-  #   board.move(board.getMove(0, 3, Direction.southWest, board.grid)[0], board.grid)
-  #   let (gameOver, winner) = board.isGameOver(board.grid)
-  #   check gameOver == true and winner == some board.human
+  test "Game Over (true, human winner)":
+    board.move(board.nextSquare(0, 1, Direction.southEast), board.grid)
+    board.move(board.getMove(0, 3, Direction.southWest, board.grid)[0], board.grid)
+    let (gameOver, winner) = board.isGameOver(board.grid)
+    check gameOver == true and winner == some board.human
 
-  # test "Game Over (no pieces)":
-  #   let
-  #     grid = @[
-  #       @[
-  #         newGridSquare(GridColor.light),
-  #         newGridSquare(GridColor.dark),
-  #         newGridSquare(GridColor.light),
-  #         newGridSquare(GridColor.dark)
-  #       ],
-  #       @[
-  #         newGridSquare(GridColor.dark),
-  #         newGridSquare(GridColor.light),
-  #         newGridSquare(GridColor.dark),
-  #         newGridSquare(GridColor.light)
-  #       ],
-  #       @[
-  #         newGridSquare(GridColor.light),
-  #         newGridSquare(GridColor.dark),
-  #         newGridSquare(GridColor.light),
-  #         newGridSquare(GridColor.dark)
-  #       ],
-  #       @[
-  #         newGridSquare(GridColor.dark),
-  #         newGridSquare(GridColor.light),
-  #         newGridSquare(GridColor.dark),
-  #         newGridSquare(GridColor.light)
-  #       ]
-  #     ]
-  #     (gameOver, winner) = board.isGameOver(grid)
-  #   check gameOver == true and winner == none PieceColor
+  test "Game Over (no pieces)":
+    let
+      grid = @[
+        @[
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark)
+        ],
+        @[
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light)
+        ],
+        @[
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark)
+        ],
+        @[
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light)
+        ]
+      ]
+      (gameOver, winner) = board.isGameOver(grid)
+    check gameOver == true and winner == none PieceColor
+
+
+  test "Minimax - game ending capture":
+    let
+      grid = @[
+        @[
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.white, @[Direction.southEast, Direction.southWest])),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark)
+        ],
+        @[
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.black, @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest], king = true)),
+          newGridSquare(GridColor.light)
+        ],
+        @[
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark)],
+        @[
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light)
+        ]
+      ]
+    board.grid = grid
+    board.turn = board.ai
+    let move = board.minimax(board.ai, board.grid, depth = 0, true, alpha = low(BiggestInt), beta = high(BiggestInt))
+    check move == newMove(0, 1, 2, 3, jump = true)

@@ -440,7 +440,7 @@ class pub Board:
 
     if maximising:
       for move in self.getPlayerMoves(player, grid):
-        gridCopy = grid
+        gridCopy = deepcopy(grid)
         self.move(move, gridCopy)
 
         # if depth == ord self.difficulty:
@@ -457,7 +457,7 @@ class pub Board:
           break
     else:
       for move in self.getPlayerMoves(player, grid):
-        gridCopy = grid
+        gridCopy = deepcopy(grid)
         self.move(move, gridCopy)
 
         # if depth == ord self.difficulty:
