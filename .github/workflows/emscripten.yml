@@ -9,10 +9,9 @@ jobs:
   build:
     strategy:
       fail-fast: false
-      matrix:
-        branch: [devel]
+      branch: devel
 
-    name: 'Nim ${{ matrix.branch }}'
+    name: 'Nim devel'
     runs-on: ubuntu-latest
 
     defaults:
