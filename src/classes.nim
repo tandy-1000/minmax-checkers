@@ -397,7 +397,6 @@ class pub Board:
         return newMove(-1, -1, -1, -1, score = 0, depth = depth)
 
     if maximising:
-      echo "maximising"
       for move in self.getPlayerMoves(player, grid):
         gridCopy = deepcopy(grid)
         self.move(move, gridCopy)
@@ -417,13 +416,10 @@ class pub Board:
           maxMove.score = currentMove.score
           maxMove.depth = depth
           alpha = max(currentMove.score, alpha)
-          echo "max move"
-          echo debugMove maxMove
 
         if alpha >= beta:
           break
     else:
-      echo "minimising"
       for move in self.getPlayerMoves(player, grid):
         gridCopy = deepcopy(grid)
         self.move(move, gridCopy)
@@ -443,14 +439,18 @@ class pub Board:
           minMove.score = currentMove.score
           minMove.depth = depth
           beta = min(currentMove.score, beta)
-          echo "min move"
-          echo debugMove minMove
 
         if alpha >= beta:
           break
 
     if depth == 0:
       return currentMove
+    else:
+      if maximising:
+        return maxMove
+      else:
+        return minMove
+
 
   proc moveAI* =
     ## Makes best move
