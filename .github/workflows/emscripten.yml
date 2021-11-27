@@ -9,7 +9,6 @@ jobs:
   build:
     strategy:
       fail-fast: false
-      branch: devel
 
     name: 'Nim devel'
     runs-on: ubuntu-latest
