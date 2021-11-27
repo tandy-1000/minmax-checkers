@@ -373,7 +373,7 @@ class pub Board:
   proc minimax*(
     player: PieceColor,
     grid: seq[seq[GridSquare]],
-    depth: int,
+    depth, maxDepth: int,
     maximising: bool,
     alpha, beta: BiggestInt
   ): Move =
@@ -401,18 +401,20 @@ class pub Board:
         gridCopy = deepcopy(grid)
         self.move(move, gridCopy)
 
-        # if depth == ord self.difficulty:
-        #   break
-        currentMove = self.minimax(self.opposingPlayer(player), gridCopy, depth + 1, not maximising, alpha, beta)
+        if depth == maxDepth:
+          break
+        currentMove = self.minimax(self.opposingPlayer(player), gridCopy, depth + 1, maxDepth, not maximising, alpha, beta)
         currentMove.x = move.x
         currentMove.y = move.y
         currentMove.x1 = move.x1
         currentMove.y1 = move.y1
+        currentMove.jump = move.jump
         if maxMove.x == -1 or currentMove.score > maxMove.score:
           maxMove.x = currentMove.x
           maxMove.y = currentMove.y
           maxMove.x1 = currentMove.x1
           maxMove.y1 = currentMove.y1
+          maxMove.jump = currentMove.jump
           maxMove.score = currentMove.score
           maxMove.depth = depth
           alpha = max(currentMove.score, alpha)
@@ -424,18 +426,20 @@ class pub Board:
         gridCopy = deepcopy(grid)
         self.move(move, gridCopy)
 
-        # if depth == ord self.difficulty:
-        #   break
-        currentMove = self.minimax(self.opposingPlayer(player), gridCopy, depth + 1, not maximising, alpha, beta)
+        if depth == maxDepth:
+          break
+        currentMove = self.minimax(self.opposingPlayer(player), gridCopy, depth + 1, maxDepth, not maximising, alpha, beta)
         currentMove.x = move.x
         currentMove.y = move.y
         currentMove.x1 = move.x1
         currentMove.y1 = move.y1
+        currentMove.jump = move.jump
         if minMove.x == -1 or currentMove.score < minMove.score:
           minMove.x = currentMove.x
           minMove.y = currentMove.y
           minMove.x1 = currentMove.x1
           minMove.y1 = currentMove.y1
+          minMove.jump = currentMove.jump
           minMove.score = currentMove.score
           minMove.depth = depth
           beta = min(currentMove.score, beta)
@@ -455,7 +459,7 @@ class pub Board:
   proc moveAI* =
     ## Makes best move
 
-    let move = self.minimax(self.ai, self.grid, depth = 0, maximising = true, alpha = low(BiggestInt), beta = high(BiggestInt))
+    let move = self.minimax(self.ai, self.grid, depth = 0, maxDepth = 2, maximising = true, alpha = low(BiggestInt), beta = high(BiggestInt))
     sleep(600)
     self.move(move, self.grid)
     self.changeTurn()
