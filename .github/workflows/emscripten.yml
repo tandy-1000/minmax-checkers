@@ -43,8 +43,7 @@ jobs:
       - name: Commit web build
         uses: EndBug/add-and-commit@v4  # Commit everything to Git repo
         with:
-          path: minmax-checkers
-          add: build
+          add: minmax-checkers/build
           force: true
           message: 'Latest web build'
         env:
@@ -53,6 +52,5 @@ jobs:
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@4.1.7
         with:
-          path: minmax-checkers
           branch: main # The branch the action should deploy to.
-          folder: build # The folder the action should deploy.
+          folder: minmax-checkers/build # The folder the action should deploy.
