@@ -38,7 +38,7 @@ jobs:
         run: nimble install -y --depsOnly
 
       - name: Compile release build
-        run: nimble webr && ls -la
+        run: nimble webr
 
       - name: Commit web build
         uses: EndBug/add-and-commit@v4  # Commit everything to Git repo
@@ -53,4 +53,4 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@4.1.7
         with:
           branch: main # The branch the action should deploy to.
-          folder: build # The folder the action should deploy.
+          folder: '/home/runner/work/minmax-checkers/minmax-checkers/minmax-checkers/build' # The folder the action should deploy.
