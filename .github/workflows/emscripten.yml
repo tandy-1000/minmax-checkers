@@ -41,12 +41,12 @@ jobs:
         run: nimble install -y --depsOnly
 
       - name: Compile release build
-        run: nimble webr
+        run: nimble webr && ls -la
 
       - name: Commit web build
         uses: EndBug/add-and-commit@v4  # Commit everything to Git repo
         with:
-          add: 'build'
+          add: 'mminmax-checkers/build'
           force: true
           message: 'Latest web build'
         env:
