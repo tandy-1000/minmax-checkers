@@ -28,11 +28,11 @@ task release, "Builds checkers for current platform":
 
 task webd, "Builds debug checkers for web":
  exec &"nim c {debugOpts} -d:emscripten -o:build/checkers.html src/main.nim"
- exec &"mv -t build checkers.data checkers.html checkers.wasm checkers.js"
- exec &"rm -rf tmp"
 
 task webr, "Builds release checkers for web":
- exec &"nim c {releaseOpts} -d:emscripten -o:checkers.html src/main.nim"
+ exec &"nim c {releaseOpts} --deepcopy:on -d:emscripten -o:checkers.html src/main.nim"
+ exec &"mv -t build checkers.data checkers.html checkers.wasm checkers.js"
+ exec &"rm -rf tmp"
 
 task debug, "Builds debug checkers for current platform":
  exec &"nim c {debugOpts} -o:checkers_debug src/main.nim"
