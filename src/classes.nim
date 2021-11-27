@@ -1,5 +1,10 @@
-import std/[os, options, random]
+import std/options
 import pkg/[nico, oolib]
+
+when defined(emscripten):
+  proc sleep(ms: int) {.header: "<emscripten.h>", importc: "emscripten_sleep", varargs.}
+else:
+  import std/os
 
 
 type
@@ -104,6 +109,13 @@ class pub Move:
       self.jump = false
     else:
       self.jump = true
+
+  proc copy*: Move =
+    result = newMove(0,0,0,0)
+    result.x = self.x
+    result.y = self.y
+    result.x1 = self.x1
+    result.y1 = self.y1
 
 
 # func for checking equality between `Move`s
@@ -304,11 +316,14 @@ class pub Board:
         if self.grid[x][y].potential:
           self.grid[x][y].potential = false
 
+  proc opposingPlayer*(player: PieceColor): PieceColor =
+    if player == PieceColor.black:
+      return PieceColor.white
+    elif player == PieceColor.white:
+      return PieceColor.black
+
   proc changeTurn* =
-    if self.turn == PieceColor.black:
-      self.turn = PieceColor.white
-    elif self.turn == PieceColor.white:
-      self.turn = PieceColor.black
+    self.turn = self.opposingPlayer(self.turn)
 
   proc move*(move: Move, grid: seq[seq[GridSquare]]) =
     ## Moves a piece on the grid, given a `Move` object and a grid.
@@ -330,14 +345,8 @@ class pub Board:
         if moves != @[]:
           if moves[0].jump:
             if moves.len == 1:
-              os.sleep(600)
+              sleep(600)
               self.move(moves[0], grid)
-          else:
-            self.changeTurn()
-        else:
-          self.changeTurn()
-      else:
-        self.changeTurn()
 
   proc hasPlayerLost*(pieces: seq[tuple[x: int, y: int]]): bool =
     ## Returns true if a player has no pieces or moves left, otherwise false.
@@ -379,14 +388,109 @@ class pub Board:
 
     return (gameOver, winner)
 
-  proc moveAI* =
-    ## Makes random moves.
+  # proc evaluatePieces*(
+  #   coords: seq[tuple[x: int, y: int]],
+  #   grid: seq[seq[GridSquare]]
+  # ): tuple[pieces: int, kings: int] =
+  #   var
+  #     pieces, kings = 0
+  #   for (x, y) in coords:
+  #     if grid[x][y].piece.get().king:
+  #       inc pieces
+  #     else:
+  #       inc kings
+  #   return (pieces, kings)
 
-    let
-      moves = self.getPlayerMoves(self.ai, self.grid)
-      randMove = sample moves
-    os.sleep(600)
-    self.move(randMove, self.grid)
+  # proc evaluate*(
+  #   maximisingPieces, minimisingPieces: seq[tuple[x: int, y: int]],
+  #   grid: seq[seq[GridSquare]]
+  # ): int =
+
+  #   let
+  #     (maxPieces, maxKings) = self.evaluatePieces(maximisingPieces, grid)
+  #     (minPieces, minKings) = self.evaluatePieces(minimisingPieces, grid)
+
+  #   return (maxPieces - minPieces) + ((maxKings - minKings) div 2)
+
+  proc minimax*(
+    player: PieceColor,
+    grid: seq[seq[GridSquare]],
+    depth: int,
+    maximising: bool,
+    alpha, beta: BiggestInt
+  ): Move =
+    var
+      gridCopy: seq[seq[GridSquare]]
+      minMove = newMove(-1, -1, -1, -1, score = beta)
+      maxMove = newMove(-1, -1, -1, -1, score = alpha)
+      currentMove: Move
+      alpha = alpha
+      beta = beta
+
+    let (gameOver, winner) = self.isGameOver(grid)
+
+    if gameOver:
+      if winner.isSome():
+        if winner.get() == player and maximising:
+          return newMove(-1, -1, -1, -1, score = 1, depth = depth)
+        else:
+          return newMove(-1, -1, -1, -1, score = -1, depth = depth)
+      else:
+        return newMove(-1, -1, -1, -1, score = 0, depth = depth)
+
+    if maximising:
+      for move in self.getPlayerMoves(player, grid):
+        gridCopy = grid
+        self.move(move, gridCopy)
+
+        # if depth == ord self.difficulty:
+        #   break
+        currentMove = self.minimax(self.opposingPlayer(player), gridCopy, depth + 1, false, alpha, beta)
+        currentMove = move.copy()
+        if maxMove.x == -1 or currentMove.score > maxMove.score:
+          maxMove = currentMove.copy()
+          maxMove.score = currentMove.score
+          maxMove.depth = depth
+          alpha = max(currentMove.score, alpha)
+
+        if alpha >= beta:
+          break
+    else:
+      for move in self.getPlayerMoves(player, grid):
+        gridCopy = grid
+        self.move(move, gridCopy)
+
+        # if depth == ord self.difficulty:
+        #   break
+        currentMove = self.minimax(self.opposingPlayer(player), gridCopy, depth + 1, true, alpha, beta)
+        currentMove = move.copy()
+        if minMove.x == -1 or currentMove.score < minMove.score:
+          minMove = currentMove.copy()
+          minMove.score = currentMove.score
+          minMove.depth = depth
+          beta = min(currentMove.score, beta)
+
+        if alpha >= beta:
+          break
+
+    if depth == 0:
+      return currentMove
+
+  proc moveAI* =
+    ## Makes best move
+    let move = self.minimax(self.ai, self.grid, depth = 0, true, alpha = low(BiggestInt), beta = high(BiggestInt))
+    sleep(600)
+    self.move(move, self.grid)
+
+  # proc randMoveAI* =
+  #   ## Makes random moves.
+
+  #   let
+  #     moves = self.getPlayerMoves(self.ai, self.grid)
+  #     randMove = sample moves
+  #   os.sleep(600)
+  #   self.move(randMove, self.grid)
+
 
 class pub Checkers:
   var
@@ -401,7 +505,7 @@ class pub Checkers:
     showHints* = true
     showClues* = false
     outOfBounds* = false
-    successfulMove* = true
+    successfulMove* = false
 
   proc `new`(difficulty: Difficulty): Checkers =
     self.board = newBoard(difficulty = difficulty)
