@@ -1,4 +1,4 @@
-import std/[unittest, options, enumerate]
+import std/[unittest, options]
 import ../src/classes
 
 suite "Move":
@@ -108,9 +108,7 @@ suite "Board":
   test "Get jump - capture":
     check board.getJump(newMove(0, 0, 1, 1), Direction.southEast) == newMove(0, 0, 2, 2, jump = true)
 
-  # test "Forced captures":
-
-  test "Make capture":
+  test "Forced captures":
     let
       grid = @[
         @[
@@ -265,23 +263,13 @@ suite "Board":
     let assertion = board.getPlayerMoves(board.human, board.grid) == @[newMove(0, 3, 1, 2), newMove(3, 2, 2, 3), newMove(3, 2, 2, 1)]
     check assertion
 
-  test "Has player lost (human)":
-    check board.hasPlayerLost(board.getPlayerPieces(board.human, board.grid)) == false
+  test "Has player lost (false)":
+    check board.hasPlayerLost(board.human, board.grid) == false
 
-  test "Has player lost (ai)":
-    check board.hasPlayerLost(board.getPlayerPieces(board.ai, board.grid)) == false
+  test "Has player lost (false)":
+    check board.hasPlayerLost(board.ai, board.grid) == false
 
-  test "Game Over (false, no winner)":
-    let (gameOver, winner) = board.isGameOver(board.grid)
-    check gameOver == false and winner == none PieceColor
-
-  test "Game Over (true, human winner)":
-    board.move(board.nextSquare(0, 1, Direction.southEast), board.grid)
-    board.move(board.getMove(0, 3, Direction.southWest, board.grid)[0], board.grid)
-    let (gameOver, winner) = board.isGameOver(board.grid)
-    check gameOver == true and winner == some board.human
-
-  test "Game Over (no pieces)":
+  test "Has player lost (human wins, ai loses)":
     let
       grid = @[
         @[
@@ -293,12 +281,30 @@ suite "Board":
         @[
           newGridSquare(GridColor.dark),
           newGridSquare(GridColor.light),
-          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.black, @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest], king = true)),
           newGridSquare(GridColor.light)
         ],
         @[
           newGridSquare(GridColor.light),
           newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark)],
+        @[
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light)
+        ]
+      ]
+    check board.hasPlayerLost(board.ai, grid) == true
+    check board.hasPlayerLost(board.human, grid) == false
+
+  test "Has player lost (ai wins, human loses)":
+    let
+      grid = @[
+        @[
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.white, @[Direction.southEast, Direction.southWest])),
           newGridSquare(GridColor.light),
           newGridSquare(GridColor.dark)
         ],
@@ -307,11 +313,61 @@ suite "Board":
           newGridSquare(GridColor.light),
           newGridSquare(GridColor.dark),
           newGridSquare(GridColor.light)
+        ],
+        @[
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark)],
+        @[
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light)
+        ]
+      ]
+    check board.hasPlayerLost(board.ai, grid) == false
+    check board.hasPlayerLost(board.human, grid) == true
+
+  test "Game Over (false, no winner)":
+    let (gameOver, winner) = board.isGameOver(board.grid)
+    check gameOver == false and winner == none PieceColor
+
+  test "Game Over (true, human winner)":
+    board.move(board.nextSquare(0, 1, Direction.southEast), board.grid)
+    board.move(board.getMove(0, 3, Direction.southWest, board.grid)[0], board.grid)
+    let (gameOver, winner) = board.isGameOver(board.grid)
+    check gameOver == true and winner == some board.human
+
+  test "Game over (not over)":
+    let
+      grid = @[
+        @[
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.white, @[Direction.southEast, Direction.southWest])),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark)
+        ],
+        @[
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.black, @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest], king = true)),
+          newGridSquare(GridColor.light)
+        ],
+        @[
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark)],
+        @[
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light)
         ]
       ]
       (gameOver, winner) = board.isGameOver(grid)
-    check gameOver == true and winner == none PieceColor
-
+    check gameOver == false and winner == none PieceColor
 
   test "Minimax - game ending capture":
     let
