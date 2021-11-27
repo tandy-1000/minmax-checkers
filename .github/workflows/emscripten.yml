@@ -37,7 +37,7 @@ jobs:
       - name: Commit web build
         uses: EndBug/add-and-commit@v4  # Commit everything to Git repo
         with:
-          add: build
+          add: build/*
           force: true
           message: 'Latest web build'
         env:
