@@ -18,7 +18,7 @@ A simple minmax checkers game in Nim with [nico](https://github.com/ftsf/nico).
 - [x] Human-like AI move making
 - [ ] Rules page
 
-## Compilation
+## Compilation on windows
 Get SDL2 dll: `nimble deps`
 
 Install dependencies: `nimble build`
