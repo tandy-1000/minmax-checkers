@@ -15,7 +15,7 @@ type
   Direction* = enum
     northEast, northWest, southEast, southWest
   Difficulty* = enum
-    easy = 6, medium = 7, hard = 8, impossible = 9
+    easy = 2, medium = 3, hard = 4, impossible = 5
 
 
 class pub Square:
@@ -162,6 +162,8 @@ class pub Board:
     gameResult*: Option[PieceColor] = none PieceColor
     ai*: PieceColor = PieceColor.white
     human*, turn*: PieceColor = PieceColor.black
+    humanPieces*, aiPieces*: seq[tuple[x: int, y: int]] = @[]
+    humanMen*, humanKings*, aiMen*, aiKings* = 0
     difficulty*: Difficulty
 
   proc `new`(difficulty: Difficulty, dimension: int = 8): Board =
@@ -184,14 +186,35 @@ class pub Board:
           else:
             self.grid[x].add newGridSquare(GridColor.dark)
 
-  proc getPlayerPieces*(player: PieceColor, grid: seq[seq[GridSquare]]): seq[tuple[x: int, y: int]] =
-    ## Returns a sequence of coordinates for each piece a given player has on the grid
+  proc getPieces*(grid: seq[seq[GridSquare]]) =
+    ## Returns a sequence of coordinates for each piece on the grid
+
+    var
+      humanMen, humanKings, aiMen, aiKings = 0
+      humanPieces, aiPieces: seq[tuple[x: int, y: int]]
 
     for x in 0 ..< self.dimension:
       for y in 0 ..< self.dimension:
         if grid[x][y].piece.isSome():
-          if grid[x][y].piece.get().color == player:
-            result.add (x, y)
+          if grid[x][y].piece.get().color == self.human:
+            if grid[x][y].piece.get().king:
+              inc humanKings
+            else:
+              inc humanMen
+            humanPieces.add (x, y)
+          elif grid[x][y].piece.get().color == self.ai:
+            if grid[x][y].piece.get().king:
+              inc aiKings
+            else:
+              inc aiMen
+            aiPieces.add (x, y)
+
+    self.humanPieces = humanPieces
+    self.humanMen = humanMen
+    self.humanKings = humanKings
+    self.aiPieces = aiPieces
+    self.aiMen = aiMen
+    self.aiKings = aiKings
 
   proc nextSquare*(x, y: int, direction: Direction): Move =
     ## Returns a `Move` object for a given direction and coordinate.
@@ -283,12 +306,21 @@ class pub Board:
     else:
       return moves
 
+  proc getPlayerPieces*(player: PieceColor): seq[tuple[x: int, y: int]] =
+    ##
+
+    if player == self.human:
+      return self.humanPieces
+    elif player == self.ai:
+      return self.aiPieces
+
   proc getPlayerMoves*(player: PieceColor, grid: seq[seq[GridSquare]]): seq[Move] =
     ## Returns a sequence of `Move`s for each move a given player can make on the grid.
+
     var
       moves, captures: seq[Move]
 
-    for (x, y) in self.getPlayerPieces(player, grid):
+    for (x, y) in self.getPlayerPieces(player):
       for move in self.getMoves(x, y, grid):
         if move.jump == true:
           captures &= move
@@ -299,14 +331,6 @@ class pub Board:
       return captures
     else:
       return moves
-
-  proc cleanGrid* =
-    ## Removes "potential" pieces from the grid, which are placed when a mouse hovers on the grid when a piece is selected.
-
-    for x in 0 ..< self.dimension:
-      for y in 0 ..< self.dimension:
-        if self.grid[x][y].potential:
-          self.grid[x][y].potential = false
 
   proc opposingPlayer*(player: PieceColor): PieceColor =
     if player == PieceColor.black:
@@ -370,6 +394,14 @@ class pub Board:
 
     return (gameOver, winner)
 
+  proc evaluate*(maxPlayer: PieceColor): int =
+    ##
+
+    if maxPlayer == self.human:
+      return (self.humanMen - self.aiMen) + ((self.humanKings - self.aiKings) div 2)
+    elif maxPlayer == self.ai:
+      return (self.aiMen - self.humanMen) + ((self.aiKings - self.humanKings) div 2)
+
   proc minimax*(
     player: PieceColor,
     grid: seq[seq[GridSquare]],
@@ -378,6 +410,7 @@ class pub Board:
     alpha, beta: BiggestInt
   ): Move =
     var
+      maxPlayer, minPlayer: PieceColor
       gridCopy: seq[seq[GridSquare]]
       minMove = newMove(-1, -1, -1, -1, score = beta, depth = depth)
       maxMove = newMove(-1, -1, -1, -1, score = alpha, depth = depth)
@@ -385,25 +418,34 @@ class pub Board:
       alpha = alpha
       beta = beta
 
-    let (gameOver, winner) = self.isGameOver(grid)
+    if maximising:
+      maxPlayer = player
+      minPlayer = self.opposingPlayer(player)
+    else:
+      maxPlayer = self.opposingPlayer(player)
+      minPlayer = player
+
+    self.getPieces(grid)
+    let
+      (gameOver, winner) = self.isGameOver(grid)
 
     if gameOver:
       if winner.isSome():
         if winner.get() == player and maximising:
-          return newMove(-1, -1, -1, -1, score = 1, depth = depth)
+          return newMove(-1, -1, -1, -1, score = 1 * self.evaluate(maxPlayer), depth = depth)
         else:
-          return newMove(-1, -1, -1, -1, score = -1, depth = depth)
+          return newMove(-1, -1, -1, -1, score = -1 * self.evaluate(maxPlayer), depth = depth)
       else:
         return newMove(-1, -1, -1, -1, score = 0, depth = depth)
 
     if maximising:
-      for move in self.getPlayerMoves(player, grid):
+      for move in self.getPlayerMoves(maxPlayer, grid):
         gridCopy = deepcopy(grid)
         self.move(move, gridCopy)
 
         if depth == maxDepth:
           break
-        currentMove = self.minimax(self.opposingPlayer(player), gridCopy, depth + 1, maxDepth, not maximising, alpha, beta)
+        currentMove = self.minimax(minPlayer, gridCopy, depth + 1, maxDepth, not maximising, alpha, beta)
         currentMove.x = move.x
         currentMove.y = move.y
         currentMove.x1 = move.x1
@@ -422,13 +464,13 @@ class pub Board:
         if alpha >= beta:
           break
     else:
-      for move in self.getPlayerMoves(player, grid):
+      for move in self.getPlayerMoves(minPlayer, grid):
         gridCopy = deepcopy(grid)
         self.move(move, gridCopy)
 
         if depth == maxDepth:
           break
-        currentMove = self.minimax(self.opposingPlayer(player), gridCopy, depth + 1, maxDepth, not maximising, alpha, beta)
+        currentMove = self.minimax(maxPlayer, gridCopy, depth + 1, maxDepth, not maximising, alpha, beta)
         currentMove.x = move.x
         currentMove.y = move.y
         currentMove.x1 = move.x1
@@ -455,11 +497,10 @@ class pub Board:
       else:
         return minMove
 
-
   proc moveAI* =
     ## Makes best move
 
-    let move = self.minimax(self.ai, self.grid, depth = 0, maxDepth = 2, maximising = true, alpha = low(BiggestInt), beta = high(BiggestInt))
+    let move = self.minimax(self.ai, self.grid, depth = 0, maxDepth = ord self.difficulty, maximising = true, alpha = low(BiggestInt), beta = high(BiggestInt))
     sleep(600)
     self.move(move, self.grid)
     self.changeTurn()
@@ -496,7 +537,17 @@ class pub Checkers:
       y = y1
     self.gridSquare = newSquare(self.offset, self.offset, y, y)
 
-  proc drawPiece*(piece: Piece, gridBound: Square, offset = 5) =
+  proc cleanGrid* =
+    ## Removes "potential" pieces from the grid, which are placed when a mouse hovers on the grid when a piece is selected.
+
+    for x in 0 ..< self.board.dimension:
+      for y in 0 ..< self.board.dimension:
+        if self.board.grid[x][y].potential:
+          self.board.grid[x][y].potential = false
+        # elif self.board.grid[x][y].clue and not self.showClues:
+        #   self.board.grid[x][y].clue = false
+
+  proc drawPiece*(piece: Piece, gridBound: Square, clue = false, offset = 5) =
     let
       x = gridBound.x + offset
       y = gridBound.y + offset
@@ -508,7 +559,7 @@ class pub Checkers:
       ry = (gridBound.y1 - gridBound.y - (offset div 2)) div 4
 
     setColor(7)
-    if piece.selected:
+    if piece.selected or clue:
       setColor(11)
       ellipsefill(x2, y2, rx + 1, ry + 1)
 
@@ -646,10 +697,10 @@ class pub Checkers:
     setColor(0)
     printc("?", 250, 247)
 
-  # proc displayClues* =
-  #   if self.showClues:
-  #     let pos = self.board.getBestMove(self.board.human)
-  #     self.drawPiece(self.board.getClueValue(self.board.human), self.gridBounds[pos.i])
+  proc displayClues* =
+    if self.showClues:
+      let move = self.board.minimax(self.board.human, self.board.grid, depth = 0, maxDepth = ord self.board.difficulty, maximising = true, alpha = low(BiggestInt), beta = high(BiggestInt))
+      self.board.grid[move.x1][move.y1].clue = true
 
   proc displayRules* =
     if self.showRules:
