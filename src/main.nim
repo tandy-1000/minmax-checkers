@@ -33,15 +33,18 @@ proc gameDraw*() =
           setColor(3)
           rectfill(square.x, square.y, square.x1, square.y1)
 
-        if c.board.grid[x][y].piece.isSome() and not c.board.grid[x][y].potential:
-          c.drawPiece(c.board.grid[x][y].piece.get(), square)
-        elif c.selected.isSome() and c.board.grid[x][y].potential:
-          c.drawPiece(newPiece(c.board.turn, king = c.board.grid[c.selected.get().x][c.selected.get().y].piece.get().king), square)
-        elif c.board.grid[x][y].piece.isNone() and c.board.grid[x][y].potential:
-          c.drawPiece(newPiece(c.board.turn), square)
+        if c.board.grid[x][y].potential:
+          if c.board.grid[x][y].piece.isNone():
+            c.drawPiece(newPiece(c.board.turn), square)
+          elif c.selected.isSome():
+            c.drawPiece(newPiece(c.board.turn, king = c.board.grid[c.selected.get().x][c.selected.get().y].piece.get().king), square)
+        elif c.board.grid[x][y].clue:
+          c.drawPiece(newPiece(c.board.turn), square, clue = true)
+        else:
+          if c.board.grid[x][y].piece.isSome():
+            c.drawPiece(c.board.grid[x][y].piece.get(), square)
 
     c.drawHelpButton()
-    # c.displayClues()
 
     if c.outOfBounds:
       setColor(4)
@@ -85,14 +88,15 @@ proc gameUpdate*(dt: float32) =
         c.board = newBoard(human = PieceColor.black, ai = PieceColor.white, difficulty = c.board.difficulty)
       elif c.isInBounds(pos, newSquare(104, 204, 152, 228)):
         c.started = true
-      elif c.isInBounds(pos, newSquare(242, 242, 250, 250)):
+      elif c.isInBounds(pos, newSquare(246, 246, 252, 252)):
         c.showRules = not c.showRules
       elif c.isInBounds(pos, newSquare(104, 160, 128, 184)):
         c.showHints = true
       elif c.isInBounds(pos, newSquare(128, 160, 152, 184)):
         c.showHints = false
   else:
-    c.board.cleanGrid()
+    c.cleanGrid()
+    c.board.getPieces(c.board.grid)
     (c.board.gameOver, c.board.gameResult) = c.board.isGameOver(c.board.grid)
     ## Human turn
     if c.board.turn == c.board.human and c.board.gameOver == false:
@@ -114,15 +118,17 @@ proc gameUpdate*(dt: float32) =
         ## checks whether the mouse click is within the game grid
         ## or within the clue button
         if c.isOutOfBounds(pos, c.gridSquare):
-          if c.isInBounds(pos, newSquare(118, 118, 125, 125)):
-            # c.showClues = not c.showClues
+          if c.isInBounds(pos, newSquare(242, 242, 250, 250)):
+            c.showClues = not c.showClues
+            c.displayClues()
+            c.showClues = not c.showClues
             c.outOfBounds = false
           else:
             c.outOfBounds = true
         else:
           c.outOfBounds = false
           c.select c.xyToGrid(pos)
-          c.board.cleanGrid()
+          c.cleanGrid()
     elif c.board.turn == c.board.ai and c.board.gameOver == false:
       c.board.moveAI()
 
