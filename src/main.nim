@@ -95,7 +95,6 @@ proc gameUpdate*(dt: float32) =
       elif c.isInBounds(pos, newSquare(128, 160, 152, 184)):
         c.showHints = false
   else:
-    c.cleanGrid()
     c.board.getPieces(c.board.grid)
     (c.board.gameOver, c.board.gameResult) = c.board.isGameOver(c.board.grid)
     ## Human turn

@@ -531,8 +531,9 @@ class pub Checkers:
       for y in 0 ..< self.board.dimension:
         if self.board.grid[x][y].potential:
           self.board.grid[x][y].potential = false
-        # elif self.board.grid[x][y].clue and not self.showClues:
-        #   self.board.grid[x][y].clue = false
+        elif self.board.grid[x][y].clue and not self.showClues:
+          self.board.grid[x][y].clue = false
+
 
   proc drawPiece*(piece: Piece, gridBound: Square, clue = false, offset = 5) =
     ## Draws a piece on the board.
@@ -548,8 +549,11 @@ class pub Checkers:
       ry = (gridBound.y1 - gridBound.y - (offset div 2)) div 4
 
     setColor(7)
-    if piece.selected or clue:
+    if piece.selected:
       setColor(11)
+      ellipsefill(x2, y2, rx + 1, ry + 1)
+    elif clue:
+      setColor(6)
       ellipsefill(x2, y2, rx + 1, ry + 1)
 
     if piece.color == PieceColor.black:
