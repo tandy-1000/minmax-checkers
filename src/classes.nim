@@ -524,16 +524,15 @@ class pub Checkers:
       y = y1
     self.gridSquare = newSquare(self.offset, self.offset, y, y)
 
-  proc cleanGrid* =
+  proc cleanGrid*(clue = false) =
     ## Removes "potential" pieces from the grid, which are placed when a mouse hovers on the grid when a piece is selected.
 
     for x in 0 ..< self.board.dimension:
       for y in 0 ..< self.board.dimension:
         if self.board.grid[x][y].potential:
           self.board.grid[x][y].potential = false
-        elif self.board.grid[x][y].clue and not self.showClues:
+        elif clue and self.board.grid[x][y].clue and not self.showClues:
           self.board.grid[x][y].clue = false
-
 
   proc drawPiece*(piece: Piece, gridBound: Square, clue = false, offset = 5) =
     ## Draws a piece on the board.
@@ -654,7 +653,7 @@ class pub Checkers:
       setColor(0)
     else:
       rect(hCenter, playerRowY - r, hCenter + 2*d, playerRowY + r)
-    printc("black", hCenter + d + 1, playerRowY - 2)
+    printc("brown", hCenter + d + 1, playerRowY - 2)
 
     setColor(7)
     printc("Hints:", hCenter + 2, hintRowY - r)
@@ -711,18 +710,22 @@ class pub Checkers:
     ## Draws the rules page.
 
     if self.showRules:
+      let midpoint = screenHeight div 2
       setColor(0)
-      rectfill(16, 16, 112, 112)
+      rectfill(16, midpoint - 48, 240, midpoint + 48)
       setColor(7)
-      rect(14, 16, 114, 112)
-      printc("Rules:", screenWidth div 2, 26)
-      printc("You may make a move", screenWidth div 2, 40)
-      printc("where white hasn't.", screenWidth div 2, 48)
-      printc("You win if you can get", screenWidth div 2, 64)
-      printc("three of your symbols", screenWidth div 2, 72)
-      printc("in a row, horizontally,", (screenWidth div 2) + 2, 80)
-      printc("vertically, or", screenWidth div 2, 88)
-      printc("diagonally.", screenWidth div 2, 96)
+      rect(14, midpoint - 48, 240, midpoint + 48)
+      printc("Rules:", screenWidth div 2, midpoint - 40)
+
+      printc("To win, capture all of the opponent's pieces,", screenWidth div 2, midpoint - 28)
+      printc("or leave them with no legal moves.", screenWidth div 2, midpoint - 20)
+
+      printc("If a capture is possible, you must make it.", screenWidth div 2, midpoint - 8)
+      printc("If there are multiple captures you", screenWidth div 2, midpoint)
+      printc("may choose between them.", screenWidth div 2, midpoint + 8)
+
+      printc("Your men will become kings if they reach the baseline,", (screenWidth div 2) + 2, midpoint + 20)
+      printc("or capture another king.", screenWidth div 2, midpoint + 28)
 
   proc gameOverMessage*(message: string, color: int) =
     ## Draws a game over message.
