@@ -364,7 +364,7 @@ class pub Board:
         if moves != @[]:
           if moves[0].jump:
             if moves.len == 1:
-              sleep(600)
+              sleep(800)
               self.move(moves[0], grid)
 
   proc hasPlayerLost*(player: PieceColor, grid: seq[seq[GridSquare]]): bool =
