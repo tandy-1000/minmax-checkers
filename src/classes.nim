@@ -187,7 +187,8 @@ class pub Board:
             self.grid[x].add newGridSquare(GridColor.dark)
 
   proc getPieces*(grid: seq[seq[GridSquare]]) =
-    ## Returns a sequence of coordinates for each piece on the grid
+    ## Stores a data on each piece on the grid in Board object.
+    ## Must be called before calling `getPlayerPieces`, `getPlayerMoves`, `hasPlayerLost`, `isGameOver`, `evaluate`.
 
     var
       humanMen, humanKings, aiMen, aiKings = 0
@@ -307,7 +308,8 @@ class pub Board:
       return moves
 
   proc getPlayerPieces*(player: PieceColor): seq[tuple[x: int, y: int]] =
-    ##
+    ## Returns a given players pieces on the grid.
+    ## Must call `getPieces` first.
 
     if player == self.human:
       return self.humanPieces
@@ -316,6 +318,7 @@ class pub Board:
 
   proc getPlayerMoves*(player: PieceColor, grid: seq[seq[GridSquare]]): seq[Move] =
     ## Returns a sequence of `Move`s for each move a given player can make on the grid.
+    ## Must call `getPieces` first.
 
     var
       moves, captures: seq[Move]
@@ -366,6 +369,7 @@ class pub Board:
 
   proc hasPlayerLost*(player: PieceColor, grid: seq[seq[GridSquare]]): bool =
     ## Returns true if a player has no pieces or moves left, otherwise false.
+    ## Must call `getPieces` first.
 
     if self.getPlayerMoves(player, grid) == @[]:
       return true
@@ -376,6 +380,7 @@ class pub Board:
     ## Returns `(gameOver, Option[PieceColor])`.
     ## `gameOver` if a player has no pieces or moves left.
     ## `PieceColor` is returned if there is a winner.
+    ## Must call `getPieces` first.
 
     var
       gameOver = false
@@ -395,7 +400,8 @@ class pub Board:
     return (gameOver, winner)
 
   proc evaluate*(maxPlayer: PieceColor): int =
-    ##
+    ## Evaluates the board for a given `maxPlayer`.
+    ## Must call `getPieces` first.
 
     if maxPlayer == self.human:
       return (self.humanMen - self.aiMen) + ((self.humanKings - self.aiKings) div 2)
@@ -548,6 +554,8 @@ class pub Checkers:
         #   self.board.grid[x][y].clue = false
 
   proc drawPiece*(piece: Piece, gridBound: Square, clue = false, offset = 5) =
+    ## Draws a piece on the board.
+
     let
       x = gridBound.x + offset
       y = gridBound.y + offset
@@ -582,11 +590,13 @@ class pub Checkers:
   proc xyToGrid*(pos: tuple[y: int, x: int]): (int, int) =  ((pos.x - self.offset) div self.size, (pos.y - self.offset) div self.size)
 
   proc deselect*(selection: tuple[x: int, y: int]) =
+    ## Deselects a piece on the board.
+
     self.board.grid[selection.x][selection.y].piece.get().selected = false
     self.selected = none tuple[x: int, y: int]
 
   proc select*(selection: tuple[x: int, y: int]) =
-    ## Selects a piece
+    ## Selects a piece on the board.
 
     let (x, y) = selection
 
@@ -612,6 +622,8 @@ class pub Checkers:
           self.successfulMove = false
 
   proc drawStartPage* =
+    ## Draws the start page.
+
     cls()
     let
       hCenter = screenWidth div 2
@@ -684,25 +696,35 @@ class pub Checkers:
     printc("Start", hCenter + 1, (screenHeight - padding*2) - 3)
 
   proc isInBounds*(pos: (int, int), square: Square): bool =
+    ## Checks whether a mouse coordinate within a given `Square`'s bounds.
+
     if (pos[0] >= square.x and pos[0] <= square.x1) and (pos[1] >= square.y and pos[1] <= square.y1):
       result = true
 
   proc isOutOfBounds*(pos: (int, int), square: Square): bool =
+    ## Checks whether a mouse coordinate outside of a given `Square`'s bounds.
+
     if (pos[0] <= square.x or pos[0] >= square.x1) or (pos[1] <= square.y or pos[1] >= square.y1):
       result = true
 
   proc drawHelpButton* =
+    ## Draws the help button.
+
     setColor(7)
     boxfill(246, 246, 7, 7)
     setColor(0)
     printc("?", 250, 247)
 
   proc displayClues* =
+    ## Gets and displays a clue for the human player.
+
     if self.showClues:
       let move = self.board.minimax(self.board.human, self.board.grid, depth = 0, maxDepth = ord self.board.difficulty, maximising = true, alpha = low(BiggestInt), beta = high(BiggestInt))
       self.board.grid[move.x1][move.y1].clue = true
 
   proc displayRules* =
+    ## Draws the rules page.
+
     if self.showRules:
       setColor(0)
       rectfill(16, 16, 112, 112)
@@ -718,6 +740,8 @@ class pub Checkers:
       printc("diagonally.", screenWidth div 2, 96)
 
   proc gameOverMessage*(message: string, color: int) =
+    ## Draws a game over message.
+
     let
       xCenter = screenWidth div 2
       yCenter = screenHeight div 2
