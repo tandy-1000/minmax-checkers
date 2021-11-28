@@ -110,6 +110,13 @@ class pub Move:
     else:
       self.jump = true
 
+  proc copy*: Move =
+    new(result)
+    result.x = self.x
+    result.y = self.y
+    result.x1 = self.x1
+    result.y1 = self.y1
+    result.jump = self.jump
 
 # func for checking equality between `Move`s
 func `==`*(a, b: Move): bool =
@@ -432,8 +439,7 @@ class pub Board:
       minPlayer = player
 
     self.getPieces(grid)
-    let
-      (gameOver, winner) = self.isGameOver(grid)
+    let (gameOver, winner) = self.isGameOver(grid)
 
     if gameOver:
       if winner.isSome():
@@ -444,56 +450,31 @@ class pub Board:
       else:
         return newMove(-1, -1, -1, -1, score = 0, depth = depth)
 
-    if maximising:
-      for move in self.getPlayerMoves(maxPlayer, grid):
-        gridCopy = deepcopy(grid)
-        self.move(move, gridCopy)
+    if depth <= maxDepth:
+      if maximising:
+        for move in self.getPlayerMoves(maxPlayer, grid):
+          gridCopy = deepcopy(grid)
+          self.move(move, gridCopy)
+          currentMove = self.minimax(minPlayer, gridCopy, depth + 1, maxDepth, not maximising, alpha, beta)
+          currentMove = move.copy()
+          if maxMove.x == -1 or currentMove.score > maxMove.score:
+            maxMove = currentMove
+            alpha = max(currentMove.score, alpha)
 
-        if depth == maxDepth:
-          break
-        currentMove = self.minimax(minPlayer, gridCopy, depth + 1, maxDepth, not maximising, alpha, beta)
-        currentMove.x = move.x
-        currentMove.y = move.y
-        currentMove.x1 = move.x1
-        currentMove.y1 = move.y1
-        currentMove.jump = move.jump
-        if maxMove.x == -1 or currentMove.score > maxMove.score:
-          maxMove.x = currentMove.x
-          maxMove.y = currentMove.y
-          maxMove.x1 = currentMove.x1
-          maxMove.y1 = currentMove.y1
-          maxMove.jump = currentMove.jump
-          maxMove.score = currentMove.score
-          maxMove.depth = depth
-          alpha = max(currentMove.score, alpha)
+          if alpha >= beta:
+            break
+      else:
+        for move in self.getPlayerMoves(minPlayer, grid):
+          gridCopy = deepcopy(grid)
+          self.move(move, gridCopy)
+          currentMove = self.minimax(maxPlayer, gridCopy, depth + 1, maxDepth, not maximising, alpha, beta)
+          currentMove = move.copy()
+          if minMove.x == -1 or currentMove.score < minMove.score:
+            minMove = currentMove
+            beta = min(currentMove.score, beta)
 
-        if alpha >= beta:
-          break
-    else:
-      for move in self.getPlayerMoves(minPlayer, grid):
-        gridCopy = deepcopy(grid)
-        self.move(move, gridCopy)
-
-        if depth == maxDepth:
-          break
-        currentMove = self.minimax(maxPlayer, gridCopy, depth + 1, maxDepth, not maximising, alpha, beta)
-        currentMove.x = move.x
-        currentMove.y = move.y
-        currentMove.x1 = move.x1
-        currentMove.y1 = move.y1
-        currentMove.jump = move.jump
-        if minMove.x == -1 or currentMove.score < minMove.score:
-          minMove.x = currentMove.x
-          minMove.y = currentMove.y
-          minMove.x1 = currentMove.x1
-          minMove.y1 = currentMove.y1
-          minMove.jump = currentMove.jump
-          minMove.score = currentMove.score
-          minMove.depth = depth
-          beta = min(currentMove.score, beta)
-
-        if alpha >= beta:
-          break
+          if alpha >= beta:
+            break
 
     if depth == 0:
       return currentMove
