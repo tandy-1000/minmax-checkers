@@ -15,7 +15,7 @@ type
   Direction* = enum
     northEast, northWest, southEast, southWest
   Difficulty* = enum
-    easy = 2, medium = 3, hard = 4, impossible = 5
+    easy = 2, medium = 50, hard = 60, impossible = 100
 
 
 class pub Square:
@@ -110,13 +110,14 @@ class pub Move:
     else:
       self.jump = true
 
-  proc copy*: Move =
+  proc copy*(score: BiggestInt): Move =
     new(result)
     result.x = self.x
     result.y = self.y
     result.x1 = self.x1
     result.y1 = self.y1
     result.jump = self.jump
+    result.score = score
 
 # func for checking equality between `Move`s
 func `==`*(a, b: Move): bool =
@@ -137,7 +138,7 @@ proc debugPieces*(pieces: seq[Piece]): string =
     result.add "\n" & debugPiece piece
 
 proc debugMove*(move: Move): string =
-  let str = "x: " & $move.x & " y: " & $move.y & "\nx1: " & $move.x1 & " y1: " & $move.y1 & "\njump: " & $move.jump
+  let str = "x: " & $move.x & " y: " & $move.y & "\nx1: " & $move.x1 & " y1: " & $move.y1 & "\njump: " & $move.jump & "\nscore: " & $move.score
   return str
 
 proc debugMoves*(moves: seq[Move]): string =
@@ -193,7 +194,7 @@ class pub Board:
           else:
             self.grid[x].add newGridSquare(GridColor.dark)
 
-  proc getPieces*(grid: seq[seq[GridSquare]]) =
+  proc getPieces*(board: Board) =
     ## Stores a data on each piece on the grid in Board object.
     ## Must be called before calling `getPlayerPieces`, `getPlayerMoves`, `hasPlayerLost`, `isGameOver`, `evaluate`.
 
@@ -203,26 +204,26 @@ class pub Board:
 
     for x in 0 ..< self.dimension:
       for y in 0 ..< self.dimension:
-        if grid[x][y].piece.isSome():
-          if grid[x][y].piece.get().color == self.human:
-            if grid[x][y].piece.get().king:
+        if board.grid[x][y].piece.isSome():
+          if board.grid[x][y].piece.get().color == board.human:
+            if board.grid[x][y].piece.get().king:
               inc humanKings
             else:
               inc humanMen
             humanPieces.add (x, y)
-          elif grid[x][y].piece.get().color == self.ai:
-            if grid[x][y].piece.get().king:
+          elif board.grid[x][y].piece.get().color == board.ai:
+            if board.grid[x][y].piece.get().king:
               inc aiKings
             else:
               inc aiMen
             aiPieces.add (x, y)
 
-    self.humanPieces = humanPieces
-    self.humanMen = humanMen
-    self.humanKings = humanKings
-    self.aiPieces = aiPieces
-    self.aiMen = aiMen
-    self.aiKings = aiKings
+    board.humanPieces = humanPieces
+    board.humanMen = humanMen
+    board.humanKings = humanKings
+    board.aiPieces = aiPieces
+    board.aiMen = aiMen
+    board.aiKings = aiKings
 
   proc nextSquare*(x, y: int, direction: Direction): Move =
     ## Returns a `Move` object for a given direction and coordinate.
@@ -383,7 +384,7 @@ class pub Board:
     else:
       return false
 
-  proc isGameOver*(grid: seq[seq[GridSquare]]): (bool, Option[PieceColor]) =
+  proc isGameOver*(board: Board): (bool, Option[PieceColor]) =
     ## Returns `(gameOver, Option[PieceColor])`.
     ## `gameOver` if a player has no pieces or moves left.
     ## `PieceColor` is returned if there is a winner.
@@ -394,8 +395,8 @@ class pub Board:
       winner = none PieceColor
 
     let
-      humanLoss = self.hasPlayerLost(self.human, grid)
-      aiLoss = self.hasPlayerLost(self.ai, grid)
+      humanLoss = self.hasPlayerLost(self.human, board.grid)
+      aiLoss = self.hasPlayerLost(self.ai, board.grid)
 
     if humanLoss or aiLoss:
       gameOver = true
@@ -406,25 +407,25 @@ class pub Board:
 
     return (gameOver, winner)
 
-  proc evaluate*(maxPlayer: PieceColor): int =
+  proc evaluate*(maxPlayer: PieceColor, board: Board): BiggestInt =
     ## Evaluates the board for a given `maxPlayer`.
-    ## Must call `getPieces` first.
 
-    if maxPlayer == self.human:
-      return (self.humanMen - self.aiMen) + ((self.humanKings - self.aiKings) div 2)
-    elif maxPlayer == self.ai:
-      return (self.aiMen - self.humanMen) + ((self.aiKings - self.humanKings) div 2)
+    if maxPlayer == board.human:
+      return (board.humanMen - board.aiMen) + ((board.humanKings - board.aiKings) div 2)
+    elif maxPlayer == board.ai:
+      return (board.aiMen - board.humanMen) + ((board.aiKings - board.humanKings) div 2)
 
   proc minimax*(
     player: PieceColor,
-    grid: seq[seq[GridSquare]],
-    depth, maxDepth: int,
-    maximising: bool,
-    alpha, beta: BiggestInt
+    board: Board,
+    depth: int,
+    maximising = true,
+    alpha = low(BiggestInt),
+    beta = high(BiggestInt)
   ): Move =
     var
       maxPlayer, minPlayer: PieceColor
-      gridCopy: seq[seq[GridSquare]]
+      boardCopy: Board
       minMove = newMove(-1, -1, -1, -1, score = beta, depth = depth)
       maxMove = newMove(-1, -1, -1, -1, score = alpha, depth = depth)
       currentMove = newMove(-1, -1, -1, -1, score = 0, depth = depth)
@@ -438,56 +439,71 @@ class pub Board:
       maxPlayer = self.opposingPlayer(player)
       minPlayer = player
 
-    self.getPieces(grid)
-    let (gameOver, winner) = self.isGameOver(grid)
+    self.getPieces(board)
+    let (gameOver, winner) = self.isGameOver(board)
 
-    if gameOver:
+    if depth == 0 or gameOver:
       if winner.isSome():
         if winner.get() == player and maximising:
-          return newMove(-1, -1, -1, -1, score = 1 * self.evaluate(maxPlayer), depth = depth)
+          # echo 10 * self.evaluate(maxPlayer, board)
+          return newMove(-1, -1, -1, -1, score = 10 * self.evaluate(maxPlayer, board))
         else:
-          return newMove(-1, -1, -1, -1, score = -1 * self.evaluate(maxPlayer), depth = depth)
-      else:
+          return newMove(-1, -1, -1, -1, score = -10 * self.evaluate(minPlayer, board))
+      elif gameOver:
         return newMove(-1, -1, -1, -1, score = 0, depth = depth)
-
-    if depth <= maxDepth:
-      if maximising:
-        for move in self.getPlayerMoves(maxPlayer, grid):
-          gridCopy = deepcopy(grid)
-          self.move(move, gridCopy)
-          currentMove = self.minimax(minPlayer, gridCopy, depth + 1, maxDepth, not maximising, alpha, beta)
-          currentMove = move.copy()
-          if maxMove.x == -1 or currentMove.score > maxMove.score:
-            maxMove = currentMove
-            alpha = max(currentMove.score, alpha)
-
-          if alpha >= beta:
-            break
       else:
-        for move in self.getPlayerMoves(minPlayer, grid):
-          gridCopy = deepcopy(grid)
-          self.move(move, gridCopy)
-          currentMove = self.minimax(maxPlayer, gridCopy, depth + 1, maxDepth, not maximising, alpha, beta)
-          currentMove = move.copy()
-          if minMove.x == -1 or currentMove.score < minMove.score:
-            minMove = currentMove
-            beta = min(currentMove.score, beta)
+        if maximising:
+          return newMove(-1, -1, -1, -1, score = self.evaluate(maxPlayer, board), depth = depth)
+        else:
+          return newMove(-1, -1, -1, -1, score = -1 * self.evaluate(minPlayer, board), depth = depth)
 
-          if alpha >= beta:
-            break
+    if maximising:
+      for move in self.getPlayerMoves(maxPlayer, board.grid):
+        boardCopy = deepcopy(board)
+        self.move(move, boardCopy.grid)
+        currentMove = self.minimax(minPlayer, boardCopy, depth - 1, not maximising, alpha, beta)
+        # echo debugMove currentMove
+        currentMove = move.copy(currentMove.score)
+        if maxMove.x == -1 or currentMove.score > maxMove.score:
+        # if currentMove.score > maxMove.score:
+          maxMove = currentMove
+          # echo "max"
+          # echo "alpha", $alpha
+          # echo "currentMove", $currentMove.score
+          alpha = max(currentMove.score, alpha)
+          # echo "alpha", $alpha
+          # echo ""
 
-    if depth == 0:
-      return currentMove
+        if alpha >= beta:
+          break
+
+      return maxMove
     else:
-      if maximising:
-        return maxMove
-      else:
-        return minMove
+      for move in self.getPlayerMoves(minPlayer, board.grid):
+        boardCopy = deepcopy(board)
+        self.move(move, boardCopy.grid)
+        currentMove = self.minimax(maxPlayer, boardCopy, depth - 1, not maximising, alpha, beta)
+        # echo debugMove currentMove
+        currentMove = move.copy(currentMove.score)
+        if minMove.x == -1 or currentMove.score < minMove.score:
+        # if currentMove.score < minMove.score:
+          minMove = currentMove
+          # echo "min"
+          # echo "beta", $beta
+          # echo "currentMove", $currentMove.score
+          beta = min(currentMove.score, beta)
+          # echo "beta", $beta
+          # echo ""
+
+        if alpha >= beta:
+          break
+
+      return minMove
 
   proc moveAI* =
     ## Makes best move
 
-    let move = self.minimax(self.ai, self.grid, depth = 0, maxDepth = ord self.difficulty, maximising = true, alpha = low(BiggestInt), beta = high(BiggestInt))
+    let move = self.minimax(self.ai, self, depth = ord self.difficulty)
     sleep(600)
     self.move(move, self.grid)
     self.changeTurn()
@@ -703,7 +719,7 @@ class pub Checkers:
     ## Gets and displays a clue for the human player.
 
     if self.showClues:
-      let move = self.board.minimax(self.board.human, self.board.grid, depth = 0, maxDepth = ord self.board.difficulty, maximising = true, alpha = low(BiggestInt), beta = high(BiggestInt))
+      let move = self.board.minimax(self.board.human, self.board, depth = ord self.board.difficulty, maximising = true, alpha = low(BiggestInt), beta = high(BiggestInt))
       self.board.grid[move.x1][move.y1].clue = true
 
   proc displayRules* =
