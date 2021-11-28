@@ -82,9 +82,9 @@ proc gameUpdate*(dt: float32) =
       elif c.isInBounds(pos, newSquare(155, 63, 201, 87)):
         c.board.difficulty = Difficulty.hard
       elif c.isInBounds(pos, newSquare(80, 108, 128, 132)):
-        c.board = newBoard(human = PieceColor.white, ai = PieceColor.black, difficulty = c.board.difficulty)
+        c.board = newBoard(human = PieceColor.white, ai = PieceColor.brown, difficulty = c.board.difficulty)
       elif c.isInBounds(pos, newSquare(128, 108, 176, 132)):
-        c.board = newBoard(human = PieceColor.black, ai = PieceColor.white, difficulty = c.board.difficulty)
+        c.board = newBoard(human = PieceColor.brown, ai = PieceColor.white, difficulty = c.board.difficulty)
       elif c.isInBounds(pos, newSquare(104, 204, 152, 228)):
         c.started = true
       elif c.isInBounds(pos, newSquare(246, 246, 252, 252)):
