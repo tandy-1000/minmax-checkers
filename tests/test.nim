@@ -200,6 +200,7 @@ suite "Board":
 
     ## set the grid to the scenario
     boardSix.grid = grid
+    boardSix.getPieces(boardSix.grid)
     ## get moves for black player
     moves = boardSix.getPlayerMoves(PieceColor.black, boardSix.grid)
     ## move black player, should make capture
@@ -251,9 +252,10 @@ suite "Board":
     check board.getMoves(3, 2, board.grid) == @[newMove(3, 2, 2, 3), newMove(3, 2, 2, 1)]
 
   test "Get player pieces (ai & human)":
+    board.getPieces(board.grid)
     let
-      humanPieces = board.getPlayerPieces(board.human, board.grid)
-      aiPieces = board.getPlayerPieces(board.ai, board.grid)
+      humanPieces = board.getPlayerPieces(board.human)
+      aiPieces = board.getPlayerPieces(board.ai)
     check humanPieces == @[(0, 3), (3, 2)] and aiPieces == @[(0, 1)]
 
   test "Get player moves (ai)":
@@ -296,6 +298,7 @@ suite "Board":
           newGridSquare(GridColor.light)
         ]
       ]
+    board.getPieces(grid)
     check board.hasPlayerLost(board.ai, grid) == true
     check board.hasPlayerLost(board.human, grid) == false
 
@@ -326,10 +329,12 @@ suite "Board":
           newGridSquare(GridColor.light)
         ]
       ]
+    board.getPieces(grid)
     check board.hasPlayerLost(board.ai, grid) == false
     check board.hasPlayerLost(board.human, grid) == true
 
   test "Game Over (false, no winner)":
+    board.getPieces(board.grid)
     let (gameOver, winner) = board.isGameOver(board.grid)
     check gameOver == false and winner == none PieceColor
 
@@ -366,7 +371,8 @@ suite "Board":
           newGridSquare(GridColor.light)
         ]
       ]
-      (gameOver, winner) = board.isGameOver(grid)
+    board.getPieces(grid)
+    let (gameOver, winner) = board.isGameOver(grid)
     check gameOver == false and winner == none PieceColor
 
   test "Minimax - 4x4 game ending capture":
