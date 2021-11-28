@@ -55,9 +55,9 @@ suite "Board":
           newGridSquare(GridColor.light),
           newGridSquare(GridColor.dark)],
         @[
-          newGridSquare(GridColor.dark, some newPiece(PieceColor.black, @[Direction.northEast, Direction.northWest])),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.brown, @[Direction.northEast, Direction.northWest])),
           newGridSquare(GridColor.light),
-          newGridSquare(GridColor.dark, some newPiece(PieceColor.black, @[Direction.northEast, Direction.northWest])),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.brown, @[Direction.northEast, Direction.northWest])),
           newGridSquare(GridColor.light)
         ]
       ]
@@ -92,13 +92,13 @@ suite "Board":
         ],
         @[
           newGridSquare(GridColor.light),
-          newGridSquare(GridColor.dark, some newPiece(PieceColor.black, @[Direction.northEast, Direction.northWest])),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.brown, @[Direction.northEast, Direction.northWest])),
           newGridSquare(GridColor.light),
           newGridSquare(GridColor.dark)],
         @[
           newGridSquare(GridColor.dark),
           newGridSquare(GridColor.light),
-          newGridSquare(GridColor.dark, some newPiece(PieceColor.black, @[Direction.northEast, Direction.northWest])),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.brown, @[Direction.northEast, Direction.northWest])),
           newGridSquare(GridColor.light)
         ]
       ]
@@ -115,7 +115,7 @@ suite "Board":
           newGridSquare(GridColor.light),
           newGridSquare(GridColor.dark, some newPiece(PieceColor.white, @[Direction.southEast, Direction.southWest])),
           newGridSquare(GridColor.light),
-          newGridSquare(GridColor.dark, some newPiece(PieceColor.black, @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest], king = true))
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.brown, @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest], king = true))
         ],
         @[
           newGridSquare(GridColor.dark),
@@ -131,7 +131,7 @@ suite "Board":
         @[
           newGridSquare(GridColor.dark),
           newGridSquare(GridColor.light),
-          newGridSquare(GridColor.dark, some newPiece(PieceColor.black, @[Direction.northEast, Direction.northWest])),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.brown, @[Direction.northEast, Direction.northWest])),
           newGridSquare(GridColor.light)
         ]
       ]
@@ -152,7 +152,7 @@ suite "Board":
           newGridSquare(GridColor.light),
           newGridSquare(GridColor.dark),
           newGridSquare(GridColor.light),
-          newGridSquare(GridColor.dark, some newPiece(PieceColor.black, @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest], king = true)),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.brown, @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest], king = true)),
           newGridSquare(GridColor.light),
           newGridSquare(GridColor.dark)
         ],
@@ -201,9 +201,9 @@ suite "Board":
     ## set the grid to the scenario
     boardSix.grid = grid
     boardSix.getPieces(boardSix.grid)
-    ## get moves for black player
-    moves = boardSix.getPlayerMoves(PieceColor.black, boardSix.grid)
-    ## move black player, should make capture
+    ## get moves for brown player
+    moves = boardSix.getPlayerMoves(PieceColor.brown, boardSix.grid)
+    ## move brown player, should make capture
     boardSix.move(moves[0], boardSix.grid)
     boardSix.changeTurn()
     ## check assertion that generated move is correct and turn is set correctly
@@ -217,7 +217,7 @@ suite "Board":
           newGridSquare(GridColor.light),
           newGridSquare(GridColor.dark, some newPiece(PieceColor.white, @[Direction.southEast, Direction.southWest])),
           newGridSquare(GridColor.light),
-          newGridSquare(GridColor.dark, some newPiece(PieceColor.black, @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest], king = true))
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.brown, @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest], king = true))
         ],
         @[
           newGridSquare(GridColor.dark),
@@ -233,7 +233,7 @@ suite "Board":
         @[
           newGridSquare(GridColor.dark),
           newGridSquare(GridColor.light),
-          newGridSquare(GridColor.dark, some newPiece(PieceColor.black, @[Direction.northEast, Direction.northWest])),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.brown, @[Direction.northEast, Direction.northWest])),
           newGridSquare(GridColor.light)
         ]
       ]
@@ -248,7 +248,7 @@ suite "Board":
   test "Get moves (top, white)":
     check board.getMoves(0, 1, board.grid) == @[newMove(0, 1, 1, 2), newMove(0, 1, 1, 0)]
 
-  test "Get moves (bottom, black":
+  test "Get moves (bottom, brown":
     check board.getMoves(3, 2, board.grid) == @[newMove(3, 2, 2, 3), newMove(3, 2, 2, 1)]
 
   test "Get player pieces (ai & human)":
@@ -283,7 +283,7 @@ suite "Board":
         @[
           newGridSquare(GridColor.dark),
           newGridSquare(GridColor.light),
-          newGridSquare(GridColor.dark, some newPiece(PieceColor.black, @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest], king = true)),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.brown, @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest], king = true)),
           newGridSquare(GridColor.light)
         ],
         @[
@@ -356,7 +356,7 @@ suite "Board":
         @[
           newGridSquare(GridColor.dark),
           newGridSquare(GridColor.light),
-          newGridSquare(GridColor.dark, some newPiece(PieceColor.black, @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest], king = true)),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.brown, @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest], king = true)),
           newGridSquare(GridColor.light)
         ],
         @[
@@ -387,7 +387,7 @@ suite "Board":
         @[
           newGridSquare(GridColor.dark),
           newGridSquare(GridColor.light),
-          newGridSquare(GridColor.dark, some newPiece(PieceColor.black, @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest], king = true)),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.brown, @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest], king = true)),
           newGridSquare(GridColor.light)
         ],
         @[
