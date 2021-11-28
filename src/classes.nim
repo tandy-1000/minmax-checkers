@@ -11,7 +11,7 @@ type
   GridColor* = enum
     dark = "⬛", light = "⬜"
   PieceColor* = enum
-    black = "⚫", white = "🟤"
+    brown = "⚫", white = "🟤"
   Direction* = enum
     northEast, northWest, southEast, southWest
   Difficulty* = enum
@@ -151,8 +151,8 @@ proc debugGrid*(grid: seq[seq[GridSquare]]): string =
       if grid[x][y].piece.isSome():
         if grid[x][y].piece.get().color == PieceColor.white:
           result.add $PieceColor.white
-        elif grid[x][y].piece.get().color == PieceColor.black:
-          result.add $PieceColor.black
+        elif grid[x][y].piece.get().color == PieceColor.brown:
+          result.add $PieceColor.brown
       else:
         if grid[x][y].color == GridColor.light:
           result.add $GridColor.light
@@ -168,14 +168,14 @@ class pub Board:
     gameOver* = false
     gameResult*: Option[PieceColor] = none PieceColor
     ai*: PieceColor = PieceColor.white
-    human*, turn*: PieceColor = PieceColor.black
+    human*, turn*: PieceColor = PieceColor.brown
     humanPieces*, aiPieces*: seq[tuple[x: int, y: int]] = @[]
     humanMen*, humanKings*, aiMen*, aiKings* = 0
     difficulty*: Difficulty
 
   proc `new`(difficulty: Difficulty, dimension: int = 8): Board =
     ## Initialises a `Board` object.
-    ## Populates the board with dark and light squares, and black and white players.
+    ## Populates the board with dark and light squares, and brown and white players.
 
     self.dimension = dimension
     self.difficulty = difficulty
@@ -343,10 +343,10 @@ class pub Board:
       return moves
 
   proc opposingPlayer*(player: PieceColor): PieceColor =
-    if player == PieceColor.black:
+    if player == PieceColor.brown:
       return PieceColor.white
     elif player == PieceColor.white:
-      return PieceColor.black
+      return PieceColor.brown
 
   proc changeTurn* =
     self.turn = self.opposingPlayer(self.turn)
@@ -555,7 +555,7 @@ class pub Checkers:
       setColor(6)
       ellipsefill(x2, y2, rx + 1, ry + 1)
 
-    if piece.color == PieceColor.black:
+    if piece.color == PieceColor.brown:
       setColor(4)
       ellipsefill(x2, y2, rx, ry)
       setColor(15)
@@ -648,7 +648,7 @@ class pub Checkers:
     printc("white", hCenter - d + 1, playerRowY - 2)
 
     setColor(7)
-    if self.board.human == PieceColor.black:
+    if self.board.human == PieceColor.brown:
       rectfill(hCenter, playerRowY - r, hCenter + 2*d, playerRowY + r)
       setColor(0)
     else:
