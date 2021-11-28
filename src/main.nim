@@ -117,7 +117,7 @@ proc gameUpdate*(dt: float32) =
         ## checks whether the mouse click is within the game grid
         ## or within the clue button
         if c.isOutOfBounds(pos, c.gridSquare):
-          if c.isInBounds(pos, newSquare(242, 242, 250, 250)):
+          if c.isInBounds(pos, newSquare(246, 246, 252, 252)):
             c.showClues = not c.showClues
             c.displayClues()
             c.showClues = not c.showClues
