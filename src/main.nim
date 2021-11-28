@@ -83,7 +83,6 @@ proc gameUpdate*(dt: float32) =
         c.board.difficulty = Difficulty.hard
       elif c.isInBounds(pos, newSquare(80, 108, 128, 132)):
         c.board = newBoard(human = PieceColor.white, ai = PieceColor.black, difficulty = c.board.difficulty)
-        echo "done"
       elif c.isInBounds(pos, newSquare(128, 108, 176, 132)):
         c.board = newBoard(human = PieceColor.black, ai = PieceColor.white, difficulty = c.board.difficulty)
       elif c.isInBounds(pos, newSquare(104, 204, 152, 228)):
@@ -95,6 +94,7 @@ proc gameUpdate*(dt: float32) =
       elif c.isInBounds(pos, newSquare(128, 160, 152, 184)):
         c.showHints = false
   else:
+    c.cleanGrid()
     c.board.getPieces(c.board.grid)
     (c.board.gameOver, c.board.gameResult) = c.board.isGameOver(c.board.grid)
     ## Human turn
@@ -127,7 +127,7 @@ proc gameUpdate*(dt: float32) =
         else:
           c.outOfBounds = false
           c.select c.xyToGrid(pos)
-          c.cleanGrid()
+          c.cleanGrid(clue = true)
     elif c.board.turn == c.board.ai and c.board.gameOver == false:
       c.board.moveAI()
 
