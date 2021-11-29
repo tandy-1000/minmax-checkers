@@ -167,9 +167,9 @@ class pub Board:
     dimension*: int
     grid*: seq[seq[GridSquare]]
     gameOver* = false
-    gameResult*: Option[PieceColor] = none PieceColor
-    ai*: PieceColor = PieceColor.white
-    human*, turn*: PieceColor = PieceColor.brown
+    gameResult* = none PieceColor
+    ai* = PieceColor.white
+    human*, turn* = PieceColor.brown
     humanPieces*, aiPieces*: seq[tuple[x: int, y: int]] = @[]
     humanMen*, humanKings*, aiMen*, aiKings* = 0
     difficulty*: Difficulty
@@ -194,7 +194,7 @@ class pub Board:
           else:
             self.grid[x].add newGridSquare(GridColor.dark)
 
-  proc getPieces*(board: Board) =
+  proc update*(board: Board) =
     ## Stores a data on each piece on the grid in Board object.
     ## Must be called before calling `getPlayerPieces`, `getPlayerMoves`, `hasPlayerLost`, `isGameOver`, `evaluate`.
 
@@ -317,7 +317,7 @@ class pub Board:
 
   proc getPlayerPieces*(player: PieceColor): seq[tuple[x: int, y: int]] =
     ## Returns a given players pieces on the grid.
-    ## Must call `getPieces` first.
+    ## Must call `update` first.
 
     if player == self.human:
       return self.humanPieces
@@ -326,7 +326,7 @@ class pub Board:
 
   proc getPlayerMoves*(player: PieceColor, grid: seq[seq[GridSquare]]): seq[Move] =
     ## Returns a sequence of `Move`s for each move a given player can make on the grid.
-    ## Must call `getPieces` first.
+    ## Must call `update` first.
 
     var
       moves, captures: seq[Move]
@@ -377,7 +377,7 @@ class pub Board:
 
   proc hasPlayerLost*(player: PieceColor, grid: seq[seq[GridSquare]]): bool =
     ## Returns true if a player has no pieces or moves left, otherwise false.
-    ## Must call `getPieces` first.
+    ## Must call `update` first.
 
     if self.getPlayerMoves(player, grid) == @[]:
       return true
@@ -388,7 +388,7 @@ class pub Board:
     ## Returns `(gameOver, Option[PieceColor])`.
     ## `gameOver` if a player has no pieces or moves left.
     ## `PieceColor` is returned if there is a winner.
-    ## Must call `getPieces` first.
+    ## Must call `update` first.
 
     var
       gameOver = false
@@ -439,13 +439,12 @@ class pub Board:
       maxPlayer = self.opposingPlayer(player)
       minPlayer = player
 
-    self.getPieces(board)
+    self.update(board)
     let (gameOver, winner) = self.isGameOver(board)
 
     if depth == 0 or gameOver:
       if winner.isSome():
         if winner.get() == player and maximising:
-          # echo 10 * self.evaluate(maxPlayer, board)
           return newMove(-1, -1, -1, -1, score = 10 * self.evaluate(maxPlayer, board))
         else:
           return newMove(-1, -1, -1, -1, score = -10 * self.evaluate(minPlayer, board))
@@ -462,17 +461,10 @@ class pub Board:
         boardCopy = deepcopy(board)
         self.move(move, boardCopy.grid)
         currentMove = self.minimax(minPlayer, boardCopy, depth - 1, not maximising, alpha, beta)
-        # echo debugMove currentMove
         currentMove = move.copy(currentMove.score)
         if maxMove.x == -1 or currentMove.score > maxMove.score:
-        # if currentMove.score > maxMove.score:
           maxMove = currentMove
-          # echo "max"
-          # echo "alpha", $alpha
-          # echo "currentMove", $currentMove.score
           alpha = max(currentMove.score, alpha)
-          # echo "alpha", $alpha
-          # echo ""
 
         if alpha >= beta:
           break
@@ -483,17 +475,10 @@ class pub Board:
         boardCopy = deepcopy(board)
         self.move(move, boardCopy.grid)
         currentMove = self.minimax(maxPlayer, boardCopy, depth - 1, not maximising, alpha, beta)
-        # echo debugMove currentMove
         currentMove = move.copy(currentMove.score)
         if minMove.x == -1 or currentMove.score < minMove.score:
-        # if currentMove.score < minMove.score:
           minMove = currentMove
-          # echo "min"
-          # echo "beta", $beta
-          # echo "currentMove", $currentMove.score
           beta = min(currentMove.score, beta)
-          # echo "beta", $beta
-          # echo ""
 
         if alpha >= beta:
           break

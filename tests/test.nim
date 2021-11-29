@@ -200,7 +200,7 @@ suite "Board":
 
     ## set the grid to the scenario
     boardSix.grid = grid
-    boardSix.getPieces(boardSix)
+    boardSix.update(boardSix)
     ## get moves for brown player
     moves = boardSix.getPlayerMoves(PieceColor.brown, boardSix.grid)
     ## move brown player, should make capture
@@ -252,7 +252,7 @@ suite "Board":
     check board.getMoves(3, 2, board.grid) == @[newMove(3, 2, 2, 3), newMove(3, 2, 2, 1)]
 
   test "Get player pieces (ai & human)":
-    board.getPieces(board)
+    board.update(board)
     let
       humanPieces = board.getPlayerPieces(board.human)
       aiPieces = board.getPlayerPieces(board.ai)
@@ -299,7 +299,7 @@ suite "Board":
         ]
       ]
     board.grid = grid
-    board.getPieces(board)
+    board.update(board)
     check board.hasPlayerLost(board.ai, board.grid) == true
     check board.hasPlayerLost(board.human, board.grid) == false
 
@@ -331,7 +331,7 @@ suite "Board":
         ]
       ]
     board.grid = grid
-    board.getPieces(board)
+    board.update(board)
     check board.hasPlayerLost(board.ai, board.grid) == false
     check board.hasPlayerLost(board.human, board.grid) == true
 
@@ -363,7 +363,7 @@ suite "Board":
         ]
       ]
     board.grid = grid
-    board.getPieces(board)
+    board.update(board)
     let (gameOver, winner) = board.isGameOver(board)
     check gameOver == false and winner == none PieceColor
 
@@ -401,7 +401,7 @@ suite "Board":
         ]
       ]
     board.grid = grid
-    board.getPieces(board)
+    board.update(board)
     let (gameOver, winner) = board.isGameOver(board)
     check gameOver == false and winner == none PieceColor
 
@@ -433,11 +433,10 @@ suite "Board":
         ]
       ]
     board.grid = grid
-    echo debugGrid grid
     let move = board.minimax(board.ai, board, depth = 100, maximising = true, alpha = low(BiggestInt), beta = high(BiggestInt))
     check move == newMove(0, 1, 2, 3, jump = true)
 
-  test "Minimax 6x6":
+  test "Minimax - 6x6 human capture ":
     let
       boardSix = newBoard(dimension = 6, difficulty = Difficulty.easy)
       grid = @[
@@ -493,5 +492,9 @@ suite "Board":
 
     ## set the grid to the scenario
     boardSix.grid = grid
-    let move = boardSix.minimax(boardSix.ai, boardSix, depth = 10)
-    check move == newMove(1, 2, 2, 3, jump = false)
+    let move = boardSix.minimax(boardSix.human, boardSix, depth = 100, maximising = true)
+    boardSix.move(move, boardSix.grid)
+    boardSix.update(boardSix)
+    let (gameOver, winner) = boardSix.isGameOver(boardSix)
+    check move == newMove(0, 3, 2, 1, jump = false) and winner.get() == boardSix.human and gameOver == true
+

@@ -95,7 +95,7 @@ proc gameUpdate*(dt: float32) =
         c.showHints = false
   else:
     c.cleanGrid()
-    c.board.getPieces(c.board)
+    c.board.update(c.board)
     (c.board.gameOver, c.board.gameResult) = c.board.isGameOver(c.board)
     ## Human turn
     if c.board.turn == c.board.human and c.board.gameOver == false:
