@@ -15,7 +15,7 @@ type
   Direction* = enum
     northEast, northWest, southEast, southWest
   Difficulty* = enum
-    easy = 2, medium = 50, hard = 60, impossible = 100
+    easy = 2, medium = 3, hard = 4, impossible = 100
 
 
 class pub Square:
@@ -352,11 +352,13 @@ class pub Board:
   proc changeTurn* =
     self.turn = self.opposingPlayer(self.turn)
 
-  proc move*(move: Move, grid: seq[seq[GridSquare]]) =
+  proc move*(move: Move, grid: seq[seq[GridSquare]], simulation = false) =
     ## Moves a piece on the grid, given a `Move` object and a grid.
     ## Also changes the current turn, and can account for kings, multi-leg captures.
 
     if grid[move.x][move.y].piece.isSome():
+      if grid[move.x][move.y].piece.get().color == self.ai and not simulation:
+        sleep(600)
       grid[move.x1][move.y1].piece = grid[move.x][move.y].piece
       grid[move.x][move.y].piece = none(Piece)
 
@@ -372,7 +374,6 @@ class pub Board:
         if moves != @[]:
           if moves[0].jump:
             if moves.len == 1:
-              sleep(800)
               self.move(moves[0], grid)
 
   proc hasPlayerLost*(player: PieceColor, grid: seq[seq[GridSquare]]): bool =
@@ -459,7 +460,7 @@ class pub Board:
     if maximising:
       for move in self.getPlayerMoves(maxPlayer, board.grid):
         boardCopy = deepcopy(board)
-        self.move(move, boardCopy.grid)
+        self.move(move, boardCopy.grid, simulation = true)
         currentMove = self.minimax(minPlayer, boardCopy, depth - 1, not maximising, alpha, beta)
         currentMove = move.copy(currentMove.score)
         if maxMove.x == -1 or currentMove.score > maxMove.score:
@@ -473,7 +474,7 @@ class pub Board:
     else:
       for move in self.getPlayerMoves(minPlayer, board.grid):
         boardCopy = deepcopy(board)
-        self.move(move, boardCopy.grid)
+        self.move(move, boardCopy.grid, simulation = true)
         currentMove = self.minimax(maxPlayer, boardCopy, depth - 1, not maximising, alpha, beta)
         currentMove = move.copy(currentMove.score)
         if minMove.x == -1 or currentMove.score < minMove.score:
@@ -489,7 +490,6 @@ class pub Board:
     ## Makes best move
 
     let move = self.minimax(self.ai, self, depth = ord self.difficulty)
-    sleep(600)
     self.move(move, self.grid)
     self.changeTurn()
 
