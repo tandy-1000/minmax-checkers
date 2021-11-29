@@ -497,4 +497,3 @@ suite "Board":
     boardSix.update(boardSix)
     let (gameOver, winner) = boardSix.isGameOver(boardSix)
     check move == newMove(0, 3, 2, 1, jump = false) and winner.get() == boardSix.human and gameOver == true
-
