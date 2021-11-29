@@ -55,11 +55,11 @@ proc gameDraw*() =
       printc("Try another position!", screenWidth div 2, 246)
 
     if c.board.turn == c.board.human:
-      setColor(7)
-      printc("Your turn.", screenWidth div 2, 246)
+      setColor(8)
+      printc("Your turn.", screenWidth div 2, 20)
     elif c.board.turn == c.board.ai:
-      setColor(6)
-      printc("AI's turn.", screenWidth div 2, 246)
+      setColor(9)
+      printc("AI's turn.", screenWidth div 2, 20)
 
     if c.board.gameOver:
       if c.board.gameResult.isSome():
