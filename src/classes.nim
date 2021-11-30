@@ -1,4 +1,4 @@
-import std/options
+import std/[options, enumerate]
 import pkg/[nico, oolib]
 
 when defined(emscripten):
@@ -66,6 +66,7 @@ func `==`*(a, b: GridSquare): bool =
 class pub Move:
   var
     x*, y*, x1*, y1*: int
+    nextLeg*: seq[Move] = @[]
     jump*: bool = false
     score*: BiggestInt = 0
     depth*: int = 0
@@ -118,6 +119,7 @@ class pub Move:
     result.y1 = self.y1
     result.jump = self.jump
     result.score = score
+    result.nextLeg = self.nextLeg
 
 # func for checking equality between `Move`s
 func `==`*(a, b: Move): bool =
@@ -138,13 +140,16 @@ proc debugPieces*(pieces: seq[Piece]): string =
     result.add "\n" & debugPiece piece
 
 proc debugMove*(move: Move): string =
-  let str = "x: " & $move.x & " y: " & $move.y & "\nx1: " & $move.x1 & " y1: " & $move.y1 & "\njump: " & $move.jump & "\nscore: " & $move.score
+  var str = "x: " & $move.x & " y: " & $move.y & "\nx1: " & $move.x1 & " y1: " & $move.y1 & "\njump: " & $move.jump & "\nscore: " & $move.score  & "\nnextLegs: \n"
+  for leg in move.nextLeg:
+    str &= debugMove leg
   return str
 
 proc debugMoves*(moves: seq[Move]): string =
   for move in moves:
     echo debugMove move
     echo ""
+
 
 proc debugGrid*(grid: seq[seq[GridSquare]]): string =
   for x in 0 ..< grid.len:
@@ -275,32 +280,89 @@ class pub Board:
             if dir.get() in grid[move.x][move.y].piece.get().directions:
               return true
 
+  proc move*(move: Move, grid: seq[seq[GridSquare]], simulation = false) =
+    ## Moves a piece on the grid, given a `Move` object and a grid.
+    ## Also changes the current turn, and can account for kings, multi-leg captures.
+
+    ## if move is possible...
+    if grid[move.x][move.y].piece.isSome():
+
+      ## sleep if AI move and is not a simulation
+      if grid[move.x][move.y].piece.get().color == self.ai and not simulation:
+        sleep(600)
+
+      ## make move
+      grid[move.x1][move.y1].piece = grid[move.x][move.y].piece
+      grid[move.x][move.y].piece = none(Piece)
+
+      ## king at baseline
+      if grid[move.x1][move.y1].piece.get().color == self.human and move.x1 == 0 or grid[move.x1][move.y1].piece.get().color == self.ai and move.x1 == self.dimension - 1:
+        grid[move.x1][move.y1].piece.get().makeKing()
+
+      if move.jump:
+        let midpoint = move.midpoint()
+
+        ## regicide
+        if grid[midpoint.x][midpoint.y].piece.get().king == true:
+          grid[move.x1][move.y1].piece.get().king = true
+
+        ## capture piece
+        grid[midpoint.x][midpoint.y].piece = none(Piece)
+
+        if move.nextLeg != @[]:
+          if move.nextLeg.len == 1:
+            self.move(move.nextLeg[0], grid)
+
   proc getCapture*(move: Move, direction: Direction, grid: seq[seq[GridSquare]]): Option[Move] =
     ## Returns a `Move` object if a capture is possible.
 
     let capture = self.getJump(move, direction)
+
     if self.isMoveLegal(capture, grid):
       return some capture
+
+  proc getNextLeg*(capture: Move, grid: seq[seq[GridSquare]]) =
+    ## Returns a `Move` object if another capture is possible
+
+    ## make grid copy
+    let gridCopy = deepcopy(grid)
+    ## simulate capture on grid copy
+    self.move(capture, gridCopy, simulation = true)
+
+    # echo debugGrid gridCopy
+    ## get next leg of captures on simulation
+    for direction in gridCopy[capture.x1][capture.y1].piece.get().directions:
+      ## get next move
+      let nextMove = self.nextSquare(capture.x1, capture.y1, direction)
+      # echo debugMove nextMove
+      if nextMove.isPossible(dimension = self.dimension):
+        ## if there is a piece in move end position
+        if gridCopy[nextMove.x1][nextMove.y1].piece.isSome():
+          ## if there is a capture, add it to the next leg
+          let nextCapture = self.getCapture(nextMove, direction, gridCopy)
+          if nextCapture.isSome():
+            self.getNextLeg(nextCapture.get(), gridCopy)
+            capture.nextLeg &= nextCapture.get()
 
   proc getMove*(x, y: int, direction: Direction, grid: seq[seq[GridSquare]]): seq[Move] =
     ## Returns a sequence of `Move` object given a coordinate and a `Direction`
 
     let move = self.nextSquare(x, y, direction)
+
     if self.isMoveLegal(move, grid):
       return @[move]
     elif move.isPossible(dimension = self.dimension):
       if grid[move.x1][move.y1].piece.isSome():
         let capture = self.getCapture(move, direction, grid)
-
         if capture.isSome():
+          self.getNextLeg(capture.get(), grid)
           return @[capture.get()]
 
   proc getMoves*(x, y: int, grid: seq[seq[GridSquare]]): seq[Move] =
     ## Returns a sequence of `Move` objects for a given coordinate.
     ## If captures are available, only they are returned.
 
-    var
-      moves, captures: seq[Move]
+    var moves, captures: seq[Move]
 
     if grid[x][y].piece.isSome():
       for direction in grid[x][y].piece.get().directions:
@@ -328,8 +390,7 @@ class pub Board:
     ## Returns a sequence of `Move`s for each move a given player can make on the grid.
     ## Must call `update` first.
 
-    var
-      moves, captures: seq[Move]
+    var moves, captures: seq[Move]
 
     for (x, y) in self.getPlayerPieces(player):
       for move in self.getMoves(x, y, grid):
@@ -351,30 +412,6 @@ class pub Board:
 
   proc changeTurn* =
     self.turn = self.opposingPlayer(self.turn)
-
-  proc move*(move: Move, grid: seq[seq[GridSquare]], simulation = false) =
-    ## Moves a piece on the grid, given a `Move` object and a grid.
-    ## Also changes the current turn, and can account for kings, multi-leg captures.
-
-    if grid[move.x][move.y].piece.isSome():
-      if grid[move.x][move.y].piece.get().color == self.ai and not simulation:
-        sleep(600)
-      grid[move.x1][move.y1].piece = grid[move.x][move.y].piece
-      grid[move.x][move.y].piece = none(Piece)
-
-      if grid[move.x1][move.y1].piece.get().color == self.human and move.x1 == 0 or grid[move.x1][move.y1].piece.get().color == self.ai and move.x1 == self.dimension - 1:
-        grid[move.x1][move.y1].piece.get().makeKing()
-
-      if move.jump:
-        let midpoint = move.midpoint()
-        if grid[midpoint.x][midpoint.y].piece.get().king == true:
-          grid[move.x1][move.y1].piece.get().king = true
-        grid[midpoint.x][midpoint.y].piece = none(Piece)
-        let moves = self.getMoves(move.x1, move.y1, grid)
-        if moves != @[]:
-          if moves[0].jump:
-            if moves.len == 1:
-              self.move(moves[0], grid)
 
   proc hasPlayerLost*(player: PieceColor, grid: seq[seq[GridSquare]]): bool =
     ## Returns true if a player has no pieces or moves left, otherwise false.
@@ -426,7 +463,8 @@ class pub Board:
   ): Move =
     var
       maxPlayer, minPlayer: PieceColor
-      boardCopy: Board
+      boardCopy, boardCaptureCopy: Board
+      bestCapture: Move
       minMove = newMove(-1, -1, -1, -1, score = beta, depth = depth)
       maxMove = newMove(-1, -1, -1, -1, score = alpha, depth = depth)
       currentMove = newMove(-1, -1, -1, -1, score = 0, depth = depth)
@@ -436,9 +474,11 @@ class pub Board:
     if maximising:
       maxPlayer = player
       minPlayer = self.opposingPlayer(player)
+      bestCapture = maxMove
     else:
       maxPlayer = self.opposingPlayer(player)
       minPlayer = player
+      bestCapture = minMove
 
     self.update(board)
     let (gameOver, winner) = self.isGameOver(board)
@@ -461,6 +501,22 @@ class pub Board:
       for move in self.getPlayerMoves(maxPlayer, board.grid):
         boardCopy = deepcopy(board)
         self.move(move, boardCopy.grid, simulation = true)
+
+        ## if more than one nextLeg
+        if move.nextLeg.len > 1:
+          ## iterate over legs
+          for capture in move.nextLeg:
+            ## make copy of board
+            boardCaptureCopy = deepcopy(boardCopy)
+            ## make capture on board copy
+            self.move(capture, boardCaptureCopy.grid, simulation = true)
+            ## call minimax on board copy
+            let minimax = self.minimax(maxPlayer, boardCaptureCopy, depth = ord self.difficulty)
+            if bestCapture.score < minimax.score:
+              bestCapture = minimax
+          move.nextLeg = @[bestCapture]
+          self.move(bestCapture, boardCopy.grid, simulation = true)
+
         currentMove = self.minimax(minPlayer, boardCopy, depth - 1, not maximising, alpha, beta)
         currentMove = move.copy(currentMove.score)
         if maxMove.x == -1 or currentMove.score > maxMove.score:
@@ -475,6 +531,21 @@ class pub Board:
       for move in self.getPlayerMoves(minPlayer, board.grid):
         boardCopy = deepcopy(board)
         self.move(move, boardCopy.grid, simulation = true)
+
+        ## if more than one nextLeg
+        if move.nextLeg.len > 1:
+          ## iterate over legs
+          for capture in move.nextLeg:
+            ## make copy of board
+            boardCaptureCopy = deepcopy(boardCopy)
+            ## make capture on board copy
+            self.move(capture, boardCaptureCopy.grid, simulation = true)
+            ## call minimax on board copy
+            let minimax = self.minimax(maxPlayer, boardCaptureCopy, depth = ord self.difficulty)
+            if bestCapture.score < minimax.score:
+              bestCapture = minimax
+          self.move(bestCapture, boardCopy.grid, simulation = true)
+
         currentMove = self.minimax(maxPlayer, boardCopy, depth - 1, not maximising, alpha, beta)
         currentMove = move.copy(currentMove.score)
         if minMove.x == -1 or currentMove.score < minMove.score:
@@ -574,6 +645,14 @@ class pub Checkers:
   ## Returns a grid index from a mouse position
   proc xyToGrid*(pos: tuple[y: int, x: int]): (int, int) =  ((pos.x - self.offset) div self.size, (pos.y - self.offset) div self.size)
 
+  proc find*(mov: Move, moves: seq[Move]): int =
+    ## Find a `Move` object in a sequence of `Move`s
+    var ind = -1
+    for i, move in enumerate(moves):
+      if move == mov:
+        ind = i
+    return ind
+
   proc deselect*(selection: tuple[x: int, y: int]) =
     ## Deselects a piece on the board.
 
@@ -598,7 +677,11 @@ class pub Checkers:
       else:
         var move = newMove(self.selected.get().x, self.selected.get().y, x, y)
         move.isCapture()
-        if move in self.board.getPlayerMoves(self.board.human, self.board.grid):
+        let
+          playerMoves = self.board.getPlayerMoves(self.board.human, self.board.grid)
+          ind = self.find(move, playerMoves)
+        if ind != -1:
+          move = playerMoves[ind]
           self.deselect (move.x, move.y)
           self.board.move(move, self.board.grid)
           self.board.changeTurn()
