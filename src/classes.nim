@@ -304,7 +304,7 @@ class pub Board:
 
         ## regicide
         if grid[midpoint.x][midpoint.y].piece.get().king == true:
-          grid[move.x1][move.y1].piece.get().king = true
+          grid[move.x1][move.y1].piece.get().makeKing()
 
         ## capture piece
         grid[midpoint.x][midpoint.y].piece = none(Piece)
