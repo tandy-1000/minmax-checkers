@@ -37,7 +37,8 @@ proc gameDraw*() =
           if c.board.grid[x][y].piece.isNone():
             c.drawPiece(newPiece(c.board.turn), square)
           elif c.selected.isSome():
-            c.drawPiece(newPiece(c.board.turn, king = c.board.grid[c.selected.get().x][c.selected.get().y].piece.get().king), square)
+            c.drawPiece(newPiece(c.board.turn, king = c.board.grid[
+                c.selected.get().x][c.selected.get().y].piece.get().king), square)
         elif c.board.grid[x][y].clue:
           c.drawPiece(newPiece(c.board.turn), square, clue = true)
         else:
@@ -89,9 +90,11 @@ proc gameUpdate*(dt: float32) =
       elif c.isInBounds(pos, newSquare(155, 63, 201, 87)):
         c.board.difficulty = Difficulty.hard
       elif c.isInBounds(pos, newSquare(80, 108, 128, 132)):
-        c.board = newBoard(human = PieceColor.white, ai = PieceColor.brown, difficulty = c.board.difficulty)
+        c.board = newBoard(human = PieceColor.white, ai = PieceColor.brown,
+            difficulty = c.board.difficulty)
       elif c.isInBounds(pos, newSquare(128, 108, 176, 132)):
-        c.board = newBoard(human = PieceColor.brown, ai = PieceColor.white, difficulty = c.board.difficulty)
+        c.board = newBoard(human = PieceColor.brown, ai = PieceColor.white,
+            difficulty = c.board.difficulty)
       elif c.isInBounds(pos, newSquare(104, 204, 152, 228)):
         c.started = true
       elif c.isInBounds(pos, newSquare(246, 246, 252, 252)):
@@ -112,8 +115,10 @@ proc gameUpdate*(dt: float32) =
       if c.showHints:
         if not c.isOutOfBounds(pos, c.gridSquare) and c.selected.isSome():
           let (x, y) = c.xyToGrid(pos)
-          if c.board.grid[x][y].color == GridColor.dark and c.board.grid[x][y].piece.isNone():
-            let potentialMoves = c.board.getMoves(c.selected.get().x, c.selected.get().y, c.board.grid)
+          if c.board.grid[x][y].color == GridColor.dark and c.board.grid[x][
+              y].piece.isNone():
+            let potentialMoves = c.board.getMoves(c.selected.get().x,
+                c.selected.get().y, c.board.grid)
             if newMove(c.selected.get().x, c.selected.get().y, x, y) in potentialMoves:
               c.board.grid[x][y].potential = true
 
