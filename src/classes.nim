@@ -29,7 +29,9 @@ class pub Piece:
     king*, selected*: bool
     directions*: seq[Direction]
 
-  proc `new`(color: PieceColor, directions: seq[Direction] = @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest], king, selected: bool = false) =
+  proc `new`(color: PieceColor, directions: seq[Direction] = @[
+      Direction.northEast, Direction.northWest, Direction.southEast,
+      Direction.southWest], king, selected: bool = false) =
     self.color = color
     self.directions = directions
     self.king = king
@@ -37,7 +39,8 @@ class pub Piece:
 
   proc makeKing* =
     self.king = true
-    self.directions = @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest]
+    self.directions = @[Direction.northEast, Direction.northWest,
+        Direction.southEast, Direction.southWest]
 
 
 # func for checking equality between `Piece`s
@@ -51,7 +54,8 @@ class pub GridSquare:
     piece*: Option[Piece]
     potential*, clue*: bool
 
-  proc `new`(color: GridColor, piece: Option[Piece] = none(Piece), potential, clue: bool = false) =
+  proc `new`(color: GridColor, piece: Option[Piece] = none(Piece), potential,
+      clue: bool = false) =
     self.color = color
     self.piece = piece
     self.potential = potential
@@ -74,7 +78,9 @@ class pub Move:
   proc isPossible*(dimension: int = 8): bool =
     ## Returns true if the `Move` is possible in the grid's dimensions.
 
-    if self.x > -1 and self.x < dimension and self.y > -1 and self.y < dimension and self.x1 > -1 and self.x1 < dimension and self.y1 > -1 and self.y1 < dimension:
+    if self.x > -1 and self.x < dimension and self.y > -1 and self.y <
+        dimension and self.x1 > -1 and self.x1 < dimension and self.y1 > -1 and
+        self.y1 < dimension:
       return true
 
   proc getDir*: Option[Direction] =
@@ -140,7 +146,8 @@ proc debugPieces*(pieces: seq[Piece]): string =
     result.add "\n" & debugPiece piece
 
 proc debugMove*(move: Move): string =
-  var str = "x: " & $move.x & " y: " & $move.y & "\nx1: " & $move.x1 & " y1: " & $move.y1 & "\njump: " & $move.jump & "\nscore: " & $move.score  & "\nnextLegs: \n"
+  var str = "x: " & $move.x & " y: " & $move.y & "\nx1: " & $move.x1 & " y1: " &
+      $move.y1 & "\njump: " & $move.jump & "\nscore: " & $move.score & "\nnextLegs: \n"
   for leg in move.nextLeg:
     str &= debugMove leg
   return str
@@ -176,7 +183,7 @@ class pub Board:
     ai* = PieceColor.white
     human*, turn* = PieceColor.brown
     humanPieces*, aiPieces*: seq[tuple[x: int, y: int]] = @[]
-    humanMen*, humanKings*, aiMen*, aiKings* = 0
+    humanMen*, humanKings*, aiMen*, aiKings * = 0
     difficulty*: Difficulty
 
   proc `new`(difficulty: Difficulty, dimension: int = 8): Board =
@@ -193,9 +200,12 @@ class pub Board:
           self.grid[x].add newGridSquare(GridColor.light)
         else:
           if x >= 0 and x < populate:
-            self.grid[x].add newGridSquare(GridColor.dark, some newPiece(color = self.ai, @[Direction.southEast, Direction.southWest]))
+            self.grid[x].add newGridSquare(GridColor.dark, some newPiece(
+                color = self.ai, @[Direction.southEast, Direction.southWest]))
           elif x >= self.dimension - populate and x < self.dimension:
-            self.grid[x].add newGridSquare(GridColor.dark, some newPiece(color = self.human, @[Direction.northEast, Direction.northWest]))
+            self.grid[x].add newGridSquare(GridColor.dark, some newPiece(
+                color = self.human, @[Direction.northEast,
+                Direction.northWest]))
           else:
             self.grid[x].add newGridSquare(GridColor.dark)
 
@@ -268,10 +278,12 @@ class pub Board:
 
     if move.isPossible(dimension = self.dimension):
       if move.jump:
-        if grid[move.x][move.y].piece.isSome() and grid[move.x1][move.y1].piece.isNone():
+        if grid[move.x][move.y].piece.isSome() and grid[move.x1][
+            move.y1].piece.isNone():
           let (xMid, yMid) = move.midpoint()
           if grid[xMid][yMid].piece.isSome():
-            if grid[xMid][yMid].piece.get().color != grid[move.x][move.y].piece.get().color:
+            if grid[xMid][yMid].piece.get().color != grid[move.x][
+                move.y].piece.get().color:
               return true
       else:
         if grid[move.x1][move.y1].piece.isNone():
@@ -296,7 +308,9 @@ class pub Board:
       grid[move.x][move.y].piece = none(Piece)
 
       ## king at baseline
-      if grid[move.x1][move.y1].piece.get().color == self.human and move.x1 == 0 or grid[move.x1][move.y1].piece.get().color == self.ai and move.x1 == self.dimension - 1:
+      if grid[move.x1][move.y1].piece.get().color == self.human and move.x1 ==
+          0 or grid[move.x1][move.y1].piece.get().color == self.ai and
+          move.x1 == self.dimension - 1:
         grid[move.x1][move.y1].piece.get().makeKing()
 
       if move.jump:
@@ -313,7 +327,8 @@ class pub Board:
           if move.nextLeg.len == 1:
             self.move(move.nextLeg[0], grid)
 
-  proc getCapture*(move: Move, direction: Direction, grid: seq[seq[GridSquare]]): Option[Move] =
+  proc getCapture*(move: Move, direction: Direction, grid: seq[seq[
+      GridSquare]]): Option[Move] =
     ## Returns a `Move` object if a capture is possible.
 
     let capture = self.getJump(move, direction)
@@ -344,7 +359,8 @@ class pub Board:
             self.getNextLeg(nextCapture.get(), gridCopy)
             capture.nextLeg &= nextCapture.get()
 
-  proc getMove*(x, y: int, direction: Direction, grid: seq[seq[GridSquare]]): seq[Move] =
+  proc getMove*(x, y: int, direction: Direction, grid: seq[seq[
+      GridSquare]]): seq[Move] =
     ## Returns a sequence of `Move` object given a coordinate and a `Direction`
 
     let move = self.nextSquare(x, y, direction)
@@ -449,9 +465,11 @@ class pub Board:
     ## Evaluates the board for a given `maxPlayer`.
 
     if maxPlayer == board.human:
-      return (board.humanMen - board.aiMen) + ((board.humanKings - board.aiKings) div 2)
+      return (board.humanMen - board.aiMen) + ((board.humanKings -
+          board.aiKings) div 2)
     elif maxPlayer == board.ai:
-      return (board.aiMen - board.humanMen) + ((board.aiKings - board.humanKings) div 2)
+      return (board.aiMen - board.humanMen) + ((board.aiKings -
+          board.humanKings) div 2)
 
   proc minimax*(
     player: PieceColor,
@@ -463,7 +481,8 @@ class pub Board:
   ): Move =
     var
       maxPlayer, minPlayer: PieceColor
-      boardCopy, boardCaptureCopy: Board
+      boardCopy: Board
+      # boardCaptureCopy: Board
       bestCapture: Move
       minMove = newMove(-1, -1, -1, -1, score = beta, depth = depth)
       maxMove = newMove(-1, -1, -1, -1, score = alpha, depth = depth)
@@ -493,31 +512,33 @@ class pub Board:
         return newMove(-1, -1, -1, -1, score = 0, depth = depth)
       else:
         if maximising:
-          return newMove(-1, -1, -1, -1, score = self.evaluate(maxPlayer, board), depth = depth)
+          return newMove(-1, -1, -1, -1, score = self.evaluate(maxPlayer,
+              board), depth = depth)
         else:
-          return newMove(-1, -1, -1, -1, score = -1 * self.evaluate(minPlayer, board), depth = depth)
+          return newMove(-1, -1, -1, -1, score = -1 * self.evaluate(minPlayer,
+              board), depth = depth)
 
     if maximising:
       for move in self.getPlayerMoves(maxPlayer, board.grid):
         boardCopy = deepcopy(board)
         self.move(move, boardCopy.grid, simulation = true)
+        # ## if more than one nextLeg
+        # if move.nextLeg.len > 1:
+        #   ## iterate over legs
+        #   for capture in move.nextLeg:
+        #     ## make copy of board
+        #     boardCaptureCopy = deepcopy(boardCopy)
+        #     ## make capture on board copy
+        #     self.move(capture, boardCaptureCopy.grid, simulation = true)
+        #     ## call minimax on board copy
+        #     let minimax = self.minimax(maxPlayer, boardCaptureCopy, depth = ord self.difficulty)
+        #     if bestCapture.score < minimax.score:
+        #       bestCapture = minimax
+        #   move.nextLeg = @[bestCapture]
+        #   self.move(bestCapture, boardCopy.grid, simulation = true)
 
-        ## if more than one nextLeg
-        if move.nextLeg.len > 1:
-          ## iterate over legs
-          for capture in move.nextLeg:
-            ## make copy of board
-            boardCaptureCopy = deepcopy(boardCopy)
-            ## make capture on board copy
-            self.move(capture, boardCaptureCopy.grid, simulation = true)
-            ## call minimax on board copy
-            let minimax = self.minimax(maxPlayer, boardCaptureCopy, depth = ord self.difficulty)
-            if bestCapture.score < minimax.score:
-              bestCapture = minimax
-          move.nextLeg = @[bestCapture]
-          self.move(bestCapture, boardCopy.grid, simulation = true)
-
-        currentMove = self.minimax(minPlayer, boardCopy, depth - 1, not maximising, alpha, beta)
+        currentMove = self.minimax(minPlayer, boardCopy, depth - 1,
+            not maximising, alpha, beta)
         currentMove = move.copy(currentMove.score)
         if maxMove.x == -1 or currentMove.score > maxMove.score:
           maxMove = currentMove
@@ -531,22 +552,22 @@ class pub Board:
       for move in self.getPlayerMoves(minPlayer, board.grid):
         boardCopy = deepcopy(board)
         self.move(move, boardCopy.grid, simulation = true)
+        # ## if more than one nextLeg
+        # if move.nextLeg.len > 1:
+        #   ## iterate over legs
+        #   for capture in move.nextLeg:
+        #     ## make copy of board
+        #     boardCaptureCopy = deepcopy(boardCopy)
+        #     ## make capture on board copy
+        #     self.move(capture, boardCaptureCopy.grid, simulation = true)
+        #     ## call minimax on board copy
+        #     let minimax = self.minimax(maxPlayer, boardCaptureCopy, depth = ord self.difficulty)
+        #     if bestCapture.score < minimax.score:
+        #       bestCapture = minimax
+        #   self.move(bestCapture, boardCopy.grid, simulation = true)
 
-        ## if more than one nextLeg
-        if move.nextLeg.len > 1:
-          ## iterate over legs
-          for capture in move.nextLeg:
-            ## make copy of board
-            boardCaptureCopy = deepcopy(boardCopy)
-            ## make capture on board copy
-            self.move(capture, boardCaptureCopy.grid, simulation = true)
-            ## call minimax on board copy
-            let minimax = self.minimax(maxPlayer, boardCaptureCopy, depth = ord self.difficulty)
-            if bestCapture.score < minimax.score:
-              bestCapture = minimax
-          self.move(bestCapture, boardCopy.grid, simulation = true)
-
-        currentMove = self.minimax(maxPlayer, boardCopy, depth - 1, not maximising, alpha, beta)
+        currentMove = self.minimax(maxPlayer, boardCopy, depth - 1,
+            not maximising, alpha, beta)
         currentMove = move.copy(currentMove.score)
         if minMove.x == -1 or currentMove.score < minMove.score:
           minMove = currentMove
@@ -643,7 +664,8 @@ class pub Checkers:
       printc("K", x2 + 1, y2 - 3)
 
   ## Returns a grid index from a mouse position
-  proc xyToGrid*(pos: tuple[y: int, x: int]): (int, int) =  ((pos.x - self.offset) div self.size, (pos.y - self.offset) div self.size)
+  proc xyToGrid*(pos: tuple[y: int, x: int]): (int, int) = ((pos.x -
+      self.offset) div self.size, (pos.y - self.offset) div self.size)
 
   proc find*(mov: Move, moves: seq[Move]): int =
     ## Find a `Move` object in a sequence of `Move`s
@@ -678,7 +700,8 @@ class pub Checkers:
         var move = newMove(self.selected.get().x, self.selected.get().y, x, y)
         move.isCapture()
         let
-          playerMoves = self.board.getPlayerMoves(self.board.human, self.board.grid)
+          playerMoves = self.board.getPlayerMoves(self.board.human,
+              self.board.grid)
           ind = self.find(move, playerMoves)
         if ind != -1:
           move = playerMoves[ind]
@@ -703,7 +726,8 @@ class pub Checkers:
       hintRowY = padding * 8
 
     setColor(3)
-    rect(hCenter - d, (screenHeight - 2*padding) - r, hCenter + d, (screenHeight - 2*padding) + r)
+    rect(hCenter - d, (screenHeight - 2*padding) - r, hCenter + d, (
+        screenHeight - 2*padding) + r)
 
     setColor(1)
     if self.board.difficulty == Difficulty.easy:
@@ -766,13 +790,15 @@ class pub Checkers:
   proc isInBounds*(pos: (int, int), square: Square): bool =
     ## Checks whether a mouse coordinate within a given `Square`'s bounds.
 
-    if (pos[0] >= square.x and pos[0] <= square.x1) and (pos[1] >= square.y and pos[1] <= square.y1):
+    if (pos[0] >= square.x and pos[0] <= square.x1) and (pos[1] >= square.y and
+        pos[1] <= square.y1):
       result = true
 
   proc isOutOfBounds*(pos: (int, int), square: Square): bool =
     ## Checks whether a mouse coordinate outside of a given `Square`'s bounds.
 
-    if (pos[0] <= square.x or pos[0] >= square.x1) or (pos[1] <= square.y or pos[1] >= square.y1):
+    if (pos[0] <= square.x or pos[0] >= square.x1) or (pos[1] <= square.y or
+        pos[1] >= square.y1):
       result = true
 
   proc drawHelpButton* =
@@ -787,7 +813,9 @@ class pub Checkers:
     ## Gets and displays a clue for the human player.
 
     if self.showClues:
-      let move = self.board.minimax(self.board.human, self.board, depth = ord self.board.difficulty, maximising = true, alpha = low(BiggestInt), beta = high(BiggestInt))
+      let move = self.board.minimax(self.board.human, self.board,
+          depth = ord self.board.difficulty, maximising = true, alpha = low(
+          BiggestInt), beta = high(BiggestInt))
       self.board.grid[move.x1][move.y1].clue = true
 
   proc displayRules* =
@@ -801,14 +829,17 @@ class pub Checkers:
       rect(14, midpoint - 48, 240, midpoint + 48)
       printc("Rules:", screenWidth div 2, midpoint - 40)
 
-      printc("To win, capture all of the opponent's pieces,", screenWidth div 2, midpoint - 28)
+      printc("To win, capture all of the opponent's pieces,", screenWidth div 2,
+          midpoint - 28)
       printc("or leave them with no legal moves.", screenWidth div 2, midpoint - 20)
 
-      printc("If a capture is possible, you must make it.", screenWidth div 2, midpoint - 8)
+      printc("If a capture is possible, you must make it.", screenWidth div 2,
+          midpoint - 8)
       printc("If there are multiple captures you", screenWidth div 2, midpoint)
       printc("may choose between them.", screenWidth div 2, midpoint + 8)
 
-      printc("Your men will become kings if they reach the baseline,", (screenWidth div 2) + 2, midpoint + 20)
+      printc("Your men will become kings if they reach the baseline,", (
+          screenWidth div 2) + 2, midpoint + 20)
       printc("or capture another king.", screenWidth div 2, midpoint + 28)
 
   proc gameOverMessage*(message: string, color: int) =
