@@ -188,7 +188,8 @@ class pub Board:
 
   proc `new`(difficulty: Difficulty, dimension: int = 8): Board =
     ## Initialises a `Board` object.
-    ## Populates the board with dark and light squares, and brown and white players.
+    ## Populates the board with dark and light squares, and brown and white
+    ##  players.
 
     self.dimension = dimension
     self.difficulty = difficulty
@@ -211,7 +212,8 @@ class pub Board:
 
   proc update*(board: Board) =
     ## Stores a data on each piece on the grid in Board object.
-    ## Must be called before calling `getPlayerPieces`, `getPlayerMoves`, `hasPlayerLost`, `isGameOver`, `evaluate`.
+    ## Must be called before calling `getPlayerPieces`, `getPlayerMoves`,
+    ##  `hasPlayerLost`, `isGameOver`, `evaluate`.
 
     var
       humanMen, humanKings, aiMen, aiKings = 0
@@ -294,7 +296,8 @@ class pub Board:
 
   proc move*(move: Move, grid: seq[seq[GridSquare]], simulation = false) =
     ## Moves a piece on the grid, given a `Move` object and a grid.
-    ## Also changes the current turn, and can account for kings, multi-leg captures.
+    ## Also changes the current turn, and can account for kings, multi-leg
+    ##  captures.
 
     ## if move is possible...
     if grid[move.x][move.y].piece.isSome():
@@ -403,7 +406,8 @@ class pub Board:
       return self.aiPieces
 
   proc getPlayerMoves*(player: PieceColor, grid: seq[seq[GridSquare]]): seq[Move] =
-    ## Returns a sequence of `Move`s for each move a given player can make on the grid.
+    ## Returns a sequence of `Move`s for each move a given player can make on
+    ## the grid.
     ## Must call `update` first.
 
     var moves, captures: seq[Move]
@@ -618,7 +622,8 @@ class pub Checkers:
     self.gridSquare = newSquare(self.offset, self.offset, y, y)
 
   proc cleanGrid*(clue = false) =
-    ## Removes "potential" pieces from the grid, which are placed when a mouse hovers on the grid when a piece is selected.
+    ## Removes "potential" pieces from the grid, which are placed when a mouse
+    ## hovers on the grid when a piece is selected.
 
     for x in 0 ..< self.board.dimension:
       for y in 0 ..< self.board.dimension:
