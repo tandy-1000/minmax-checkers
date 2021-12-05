@@ -717,14 +717,17 @@ suite "Board":
           newGridSquare(GridColor.light),
           newGridSquare(GridColor.dark),
           newGridSquare(GridColor.light),
-          newGridSquare(GridColor.dark, some newPiece(PieceColor.brown, @[Direction.northEast, Direction.northWest, Direction.southEast, Direction.southWest], king = true)),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.brown,
+            @[Direction.northEast, Direction.northWest, Direction.southEast,
+            Direction.southWest], king = true)),
           newGridSquare(GridColor.light),
           newGridSquare(GridColor.dark)
         ],
         @[
           newGridSquare(GridColor.dark),
           newGridSquare(GridColor.light),
-          newGridSquare(GridColor.dark, some newPiece(PieceColor.white, @[Direction.southEast, Direction.southWest])),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.white,
+            @[Direction.southEast, Direction.southWest])),
           newGridSquare(GridColor.light),
           newGridSquare(GridColor.dark),
           newGridSquare(GridColor.light)
@@ -740,7 +743,8 @@ suite "Board":
         @[
           newGridSquare(GridColor.dark),
           newGridSquare(GridColor.light),
-          newGridSquare(GridColor.dark, some newPiece(PieceColor.white, @[Direction.southEast, Direction.southWest])),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.white,
+            @[Direction.southEast, Direction.southWest])),
           newGridSquare(GridColor.light),
           newGridSquare(GridColor.dark),
           newGridSquare(GridColor.light)
@@ -765,11 +769,15 @@ suite "Board":
 
     ## set the grid to the scenario
     boardSix.grid = grid
-    let move = boardSix.minimax(boardSix.human, boardSix, depth = 5, maximising = true)
+    let move = boardSix.minimax(boardSix.human, boardSix, depth = 5,
+        maximising = true)
     boardSix.move(move, boardSix.grid)
     boardSix.update(boardSix)
     let (gameOver, winner) = boardSix.isGameOver(boardSix)
-    check move == newMove(0, 3, 2, 1, jump = true, nextLeg = @[newMove(2, 1, 4, 3, jump = true, nextLeg = @[])]) and winner.get() == boardSix.human and gameOver == true
+    check move == newMove(0, 3, 2, 1, jump = true,
+      nextLeg = @[newMove(2, 1, 4, 3, jump = true, nextLeg = @[])])
+    check winner.get() == boardSix.human
+    check gameOver == true
 
   test "Minimax - capture comparision":
     let
