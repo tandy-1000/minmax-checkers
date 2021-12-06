@@ -341,13 +341,10 @@ class pub Board:
     let gridCopy = deepcopy(grid)
     ## simulate capture on grid copy
     self.move(capture, gridCopy, simulation = true)
-
-    # echo debugGrid gridCopy
     ## get next leg of captures on simulation
     for direction in gridCopy[capture.x1][capture.y1].piece.get().directions:
       ## get next move
       let nextMove = self.nextSquare(capture.x1, capture.y1, direction)
-      # echo debugMove nextMove
       if nextMove.isPossible(dimension = self.dimension):
         ## if there is a piece in move end position
         if gridCopy[nextMove.x1][nextMove.y1].piece.isSome():
@@ -712,7 +709,8 @@ class pub Checkers:
           move = playerMoves[ind]
           self.deselect (move.x, move.y)
           self.board.move(move, self.board.grid)
-          self.board.changeTurn()
+          if move.nextLeg.len <= 1:
+            self.board.changeTurn()
           self.successfulMove = true
         else:
           self.successfulMove = false
