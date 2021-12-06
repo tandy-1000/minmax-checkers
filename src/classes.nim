@@ -323,7 +323,7 @@ class pub Board:
 
         if move.nextLeg != @[]:
           if move.nextLeg.len == 1:
-            self.move(move.nextLeg[0], grid)
+            self.move(move.nextLeg[0], grid, simulation = simulation)
 
   proc getCapture*(move: Move, direction: Direction, grid: seq[seq[
       GridSquare]]): Option[Move] =
