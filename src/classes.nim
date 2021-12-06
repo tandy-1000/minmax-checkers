@@ -18,11 +18,6 @@ type
     easy = 2, medium = 3, hard = 6, impossible = 100
 
 
-class pub Square:
-  var
-    x*, y*, x1*, y1*: int
-
-
 class pub Piece:
   var
     color*: PieceColor
@@ -588,6 +583,11 @@ class pub Board:
     let move = self.minimax(self.ai, self, depth = ord self.difficulty)
     self.move(move, self.grid)
     self.changeTurn()
+
+
+class pub Square:
+  var
+    x*, y*, x1*, y1*: int
 
 
 class pub Checkers:
