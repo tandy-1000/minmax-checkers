@@ -15,7 +15,7 @@ type
   Direction* = enum
     northEast, northWest, southEast, southWest
   Difficulty* = enum
-    easy = 3, medium = 6, hard = 12, impossible = 100
+    easy = 3, medium = 6, hard = 9, impossible = 100
 
 
 class pub Piece:
