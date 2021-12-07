@@ -22,29 +22,7 @@ proc gameDraw*() =
     setColor(7)
     printc("CHECKERS", screenWidth div 2, 8)
 
-    var square: Square
-    for x in 0 ..< c.board.dimension:
-      for y in 0 ..< c.board.dimension:
-        square = c.gridBounds[x][y]
-        if c.board.grid[x][y].color == GridColor.light:
-          setColor(7)
-          rectfill(square.x, square.y, square.x1, square.y1)
-        else:
-          setColor(3)
-          rectfill(square.x, square.y, square.x1, square.y1)
-
-        if c.board.grid[x][y].potential:
-          if c.board.grid[x][y].piece.isNone():
-            c.drawPiece(newPiece(c.board.turn), square)
-          elif c.selected.isSome():
-            c.drawPiece(newPiece(c.board.turn, king = c.board.grid[
-                c.selected.get().x][c.selected.get().y].piece.get().king), square)
-        elif c.board.grid[x][y].clue:
-          c.drawPiece(newPiece(c.board.turn), square, clue = true)
-        else:
-          if c.board.grid[x][y].piece.isSome():
-            c.drawPiece(c.board.grid[x][y].piece.get(), square)
-
+    c.board.drawBoard(c.board.gridBounds, c.selected)
     c.drawHelpButton()
 
     if c.outOfBounds:
@@ -91,10 +69,10 @@ proc gameUpdate*(dt: float32) =
         c.board.difficulty = Difficulty.hard
       elif c.isInBounds(pos, newSquare(80, 108, 128, 132)):
         c.board = newBoard(human = PieceColor.white, ai = PieceColor.brown,
-            difficulty = c.board.difficulty)
+            difficulty = c.board.difficulty, offset = c.offset, size = c.size)
       elif c.isInBounds(pos, newSquare(128, 108, 176, 132)):
         c.board = newBoard(human = PieceColor.brown, ai = PieceColor.white,
-            difficulty = c.board.difficulty)
+            difficulty = c.board.difficulty, offset = c.offset, size = c.size)
       elif c.isInBounds(pos, newSquare(104, 204, 152, 228)):
         c.started = true
       elif c.isInBounds(pos, newSquare(246, 246, 252, 252)):
@@ -104,7 +82,7 @@ proc gameUpdate*(dt: float32) =
       elif c.isInBounds(pos, newSquare(128, 160, 152, 184)):
         c.showHints = false
   else:
-    c.cleanGrid()
+    c.cleanBoard()
     c.board.update(c.board)
     (c.board.gameOver, c.board.gameResult) = c.board.isGameOver(c.board)
     ## Human turn
@@ -113,7 +91,7 @@ proc gameUpdate*(dt: float32) =
 
       ## Shows hint on hover
       if c.showHints:
-        if not c.isOutOfBounds(pos, c.gridSquare) and c.selected.isSome():
+        if not c.isOutOfBounds(pos, c.board.gridSquare) and c.selected.isSome():
           let (x, y) = c.xyToGrid(pos)
           if c.board.grid[x][y].color == GridColor.dark and c.board.grid[x][
               y].piece.isNone():
@@ -128,7 +106,7 @@ proc gameUpdate*(dt: float32) =
 
         ## checks whether the mouse click is within the game grid
         ## or within the clue button
-        if c.isOutOfBounds(pos, c.gridSquare):
+        if c.isOutOfBounds(pos, c.board.gridSquare):
           if c.isInBounds(pos, newSquare(246, 246, 252, 252)):
             c.showClues = not c.showClues
             c.displayClues()
@@ -139,7 +117,7 @@ proc gameUpdate*(dt: float32) =
         else:
           c.outOfBounds = false
           c.select c.xyToGrid(pos)
-          c.cleanGrid(clue = true)
+          c.cleanBoard(clue = true)
     elif c.board.turn == c.board.ai and c.board.gameOver == false:
       c.board.moveAI()
 

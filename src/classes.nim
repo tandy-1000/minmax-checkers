@@ -18,6 +18,11 @@ type
     easy = 3, medium = 6, hard = 9, impossible = 100
 
 
+class pub Square:
+  var
+    x*, y*, x1*, y1*: int
+
+
 class pub Piece:
   var
     color*: PieceColor
@@ -152,7 +157,6 @@ proc debugMoves*(moves: seq[Move]): string =
     echo debugMove move
     echo ""
 
-
 proc debugGrid*(grid: seq[seq[GridSquare]]): string =
   for x in 0 ..< grid.len:
     for y in 0 ..< grid[x].len:
@@ -172,6 +176,8 @@ proc debugGrid*(grid: seq[seq[GridSquare]]): string =
 class pub Board:
   var
     dimension*: int
+    gridBounds*: seq[seq[Square]]
+    gridSquare*: Square
     grid*: seq[seq[GridSquare]]
     gameOver* = false
     gameResult* = none PieceColor
@@ -181,29 +187,107 @@ class pub Board:
     humanMen*, humanKings*, aiMen*, aiKings * = 0
     difficulty*: Difficulty
 
-  proc `new`(difficulty: Difficulty, dimension: int = 8): Board =
+  proc `new`(difficulty: Difficulty, offset, size: int, dimension: int = 8): Board =
     ## Initialises a `Board` object.
     ## Populates the board with dark and light squares, and brown and white
     ##  players.
 
     self.dimension = dimension
     self.difficulty = difficulty
+
+    var x, y, x1, y1: int = offset
     let populate = (self.dimension div 2) - 1
-    for x in 0 ..< self.dimension:
+    for row in 0 ..< self.dimension:
+      self.gridBounds.add @[]
+      x = offset
+      x1 = offset
+      y1 = y + size
+
       self.grid.add @[]
-      for y in 0 ..< self.dimension:
-        if (x mod 2 == 0 and y mod 2 == 0) or (x mod 2 != 0 and y mod 2 != 0):
-          self.grid[x].add newGridSquare(GridColor.light)
+      for col in 0 ..< self.dimension:
+
+        x1 = x + size
+        self.gridBounds[row].add newSquare(x, y, x1, y1)
+        x = x1
+
+        if (row mod 2 == 0 and col mod 2 == 0) or (row mod 2 != 0 and col mod 2 != 0):
+          self.grid[row].add newGridSquare(GridColor.light)
         else:
-          if x >= 0 and x < populate:
-            self.grid[x].add newGridSquare(GridColor.dark, some newPiece(
+          if row >= 0 and row < populate:
+            self.grid[row].add newGridSquare(GridColor.dark, some newPiece(
                 color = self.ai, @[Direction.southEast, Direction.southWest]))
-          elif x >= self.dimension - populate and x < self.dimension:
-            self.grid[x].add newGridSquare(GridColor.dark, some newPiece(
+          elif row >= self.dimension - populate and row < self.dimension:
+            self.grid[row].add newGridSquare(GridColor.dark, some newPiece(
                 color = self.human, @[Direction.northEast,
                 Direction.northWest]))
           else:
-            self.grid[x].add newGridSquare(GridColor.dark)
+            self.grid[row].add newGridSquare(GridColor.dark)
+      y = y1
+
+      self.gridSquare = newSquare(offset, offset, y, y)
+
+  proc drawPiece*(piece: Piece, gridBound: Square, clue = false, offset = 5) =
+    ## Draws a piece on the board.
+
+    let
+      x = gridBound.x + offset
+      y = gridBound.y + offset
+      x1 = gridBound.x1 - offset
+      y1 = gridBound.y1 - offset
+      x2 = (x1 + x) div 2
+      y2 = (y1 + y) div 2
+      rx = (gridBound.x1 - gridBound.x - offset) div 2
+      ry = (gridBound.y1 - gridBound.y - (offset div 2)) div 4
+
+    setColor(7)
+    if piece.selected:
+      setColor(11)
+      ellipsefill(x2, y2, rx + 1, ry + 1)
+    elif clue:
+      setColor(6)
+      ellipsefill(x2, y2, rx + 1, ry + 1)
+
+    if piece.color == PieceColor.brown:
+      setColor(4)
+      ellipsefill(x2, y2, rx, ry)
+      setColor(15)
+      ellipsefill(x2, y2 - 1, rx, ry - 1)
+    elif piece.color == PieceColor.white:
+      setColor(6)
+      ellipsefill(x2, y2, rx, ry)
+      setColor(7)
+      ellipsefill(x2, y2 - (offset div 4), rx, ry - (offset div 4))
+
+    if piece.king:
+      setColor(9)
+      printc("K", x2 + 1, y2 - 3)
+
+  proc drawBoard*(gridBounds: seq[seq[Square]], selected = none tuple[x: int, y: int]) =
+    ## Draws the Checkers board.
+
+    var square: Square
+
+    for x in 0 ..< self.dimension:
+      for y in 0 ..< self.dimension:
+        square = gridBounds[x][y]
+        if self.grid[x][y].color == GridColor.light:
+          setColor(7)
+          rectfill(square.x, square.y, square.x1, square.y1)
+        else:
+          setColor(3)
+          rectfill(square.x, square.y, square.x1, square.y1)
+
+        if self.grid[x][y].potential:
+          if self.grid[x][y].piece.isNone():
+            self.drawPiece(newPiece(self.turn), square)
+          elif selected.isSome():
+            self.drawPiece(newPiece(self.turn, king = self.grid[
+                selected.get().x][selected.get().y].piece.get().king), square)
+        elif self.grid[x][y].clue:
+          self.drawPiece(newPiece(self.turn), square, clue = true)
+        else:
+          if self.grid[x][y].piece.isSome():
+            self.drawPiece(self.grid[x][y].piece.get(), square)
 
   proc update*(board: Board) =
     ## Stores a data on each piece on the grid in Board object.
@@ -296,11 +380,7 @@ class pub Board:
 
     ## if move is possible...
     if grid[move.x][move.y].piece.isSome():
-
-      ## sleep if AI move and is not a simulation
-      if grid[move.x][move.y].piece.get().color == self.ai and not simulation:
-        sleep(600)
-
+      let originalPiece = grid[move.x][move.y].piece
       ## make move
       grid[move.x1][move.y1].piece = grid[move.x][move.y].piece
       grid[move.x][move.y].piece = none(Piece)
@@ -323,6 +403,11 @@ class pub Board:
 
         if move.nextLeg != @[]:
           if move.nextLeg.len == 1:
+            ## sleep if AI move and is not a simulation
+            if originalPiece.get().color == self.ai and not simulation:
+              echo "updating"
+              self.drawBoard(self.gridBounds)
+              sleep(1000)
             self.move(move.nextLeg[0], grid, simulation = simulation)
 
   proc getCapture*(move: Move, direction: Direction, grid: seq[seq[
@@ -582,15 +667,8 @@ class pub Board:
     self.changeTurn()
 
 
-class pub Square:
-  var
-    x*, y*, x1*, y1*: int
-
-
 class pub Checkers:
   var
-    gridBounds*: seq[seq[Square]]
-    gridSquare*: Square
     board*: Board
     offset* = 32
     size* = 24
@@ -603,24 +681,26 @@ class pub Checkers:
     successfulMove* = true
 
   proc `new`(difficulty: Difficulty): Checkers =
-    self.board = newBoard(difficulty = difficulty)
-    var
-      x, y, x1, y1: int = self.offset
-    for row in 0 ..< self.board.dimension:
-      self.gridBounds.add @[]
-      x = self.offset
-      x1 = self.offset
-      y1 = y + self.size
-      for col in 0 ..< self.board.dimension:
-        x1 = x + self.size
-        self.gridBounds[row].add newSquare(x, y, x1, y1)
-        x = x1
-      y = y1
-    self.gridSquare = newSquare(self.offset, self.offset, y, y)
+    ## Initialises a `Checkers` object.
 
-  proc cleanGrid*(clue = false) =
-    ## Removes "potential" pieces from the grid, which are placed when a mouse
-    ## hovers on the grid when a piece is selected.
+    self.board = newBoard(difficulty = difficulty, offset = self.offset, size = self.size)
+
+    # var x, y, x1, y1: int = self.offset
+    # for row in 0 ..< self.board.dimension:
+    #   self.gridBounds.add @[]
+    #   x = self.offset
+    #   x1 = self.offset
+    #   y1 = y + self.size
+    #   for col in 0 ..< self.board.dimension:
+    #     x1 = x + self.size
+    #     self.gridBounds[row].add newSquare(x, y, x1, y1)
+    #     x = x1
+    #   y = y1
+    # self.gridSquare = newSquare(self.offset, self.offset, y, y)
+
+  proc cleanBoard*(clue = false) =
+    ## Removes "potential" pieces from the board, which are placed when a mouse
+    ## hovers on the board when a piece is selected.
 
     for x in 0 ..< self.board.dimension:
       for y in 0 ..< self.board.dimension:
@@ -628,42 +708,6 @@ class pub Checkers:
           self.board.grid[x][y].potential = false
         elif clue and self.board.grid[x][y].clue and not self.showClues:
           self.board.grid[x][y].clue = false
-
-  proc drawPiece*(piece: Piece, gridBound: Square, clue = false, offset = 5) =
-    ## Draws a piece on the board.
-
-    let
-      x = gridBound.x + offset
-      y = gridBound.y + offset
-      x1 = gridBound.x1 - offset
-      y1 = gridBound.y1 - offset
-      x2 = (x1 + x) div 2
-      y2 = (y1 + y) div 2
-      rx = (gridBound.x1 - gridBound.x - offset) div 2
-      ry = (gridBound.y1 - gridBound.y - (offset div 2)) div 4
-
-    setColor(7)
-    if piece.selected:
-      setColor(11)
-      ellipsefill(x2, y2, rx + 1, ry + 1)
-    elif clue:
-      setColor(6)
-      ellipsefill(x2, y2, rx + 1, ry + 1)
-
-    if piece.color == PieceColor.brown:
-      setColor(4)
-      ellipsefill(x2, y2, rx, ry)
-      setColor(15)
-      ellipsefill(x2, y2 - 1, rx, ry - 1)
-    elif piece.color == PieceColor.white:
-      setColor(6)
-      ellipsefill(x2, y2, rx, ry)
-      setColor(7)
-      ellipsefill(x2, y2 - (offset div 4), rx, ry - (offset div 4))
-
-    if piece.king:
-      setColor(9)
-      printc("K", x2 + 1, y2 - 3)
 
   ## Returns a grid index from a mouse position
   proc xyToGrid*(pos: tuple[y: int, x: int]): (int, int) = ((pos.x -
