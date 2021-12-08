@@ -358,7 +358,8 @@ class pub Board:
     capture: Move,
     grid: seq[seq[GridSquare]]
   ) =
-    ## Returns a `Move` object if another capture is possible
+    ## Appends another capture to the given capture's `nextLeg` property
+    ## if possible, recursively calls `getNextLeg` on found capture.
 
     ## make grid copy
     let gridCopy = deepcopy(grid)
@@ -368,14 +369,14 @@ class pub Board:
     for direction in gridCopy[capture.x1][capture.y1].piece.get().directions:
       ## get next move
       let nextMove = self.getNextSquare(capture.x1, capture.y1, direction)
-      if nextMove.isPossible(dimension = self.dimension):
-        ## if there is a piece in move end position
-        if gridCopy[nextMove.x1][nextMove.y1].piece.isSome():
-          ## if there is a capture, add it to the next leg
-          let nextCapture = self.getCapture(nextMove, direction, gridCopy)
-          if nextCapture.isSome():
-            self.getNextLeg(nextCapture.get(), gridCopy)
-            capture.nextLeg &= nextCapture.get()
+      ## if the move is possible and the end position is occupied
+      if nextMove.isPossible(dimension = self.dimension) and
+          gridCopy[nextMove.x1][nextMove.y1].piece.isSome():
+        ## get a capture, add it to the next leg
+        let nextCapture = self.getCapture(nextMove, direction, gridCopy)
+        if nextCapture.isSome():
+          self.getNextLeg(nextCapture.get(), gridCopy)
+          capture.nextLeg &= nextCapture.get()
 
   proc followNextLeg*(
     move: Move,
