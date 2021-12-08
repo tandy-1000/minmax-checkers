@@ -427,12 +427,16 @@ class pub Board:
       return moves
 
   proc opposingPlayer*(player: PieceColor): PieceColor =
+    ## Returns the opposing player given a player.
+
     if player == PieceColor.brown:
       return PieceColor.white
     elif player == PieceColor.white:
       return PieceColor.brown
 
   proc changeTurn* =
+    ## Changes the current turn to the opposing player
+
     self.turn = self.opposingPlayer(self.turn)
 
   proc hasPlayerLost*(player: PieceColor, grid: seq[seq[GridSquare]]): bool =
