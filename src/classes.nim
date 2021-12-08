@@ -401,19 +401,19 @@ class pub Board:
     x, y: int,
     direction: Direction,
     grid: seq[seq[GridSquare]]
-  ): seq[Move] =
-    ## Returns a sequence of `Move` object given a coordinate and a `Direction`
+  ): Option[Move] =
+    ## Returns an optional `Move` object given a coordinate and a `Direction`
 
     let move = self.nextSquare(x, y, direction)
 
     if self.isMoveLegal(move, grid):
-      return @[move]
+      return some move
     elif move.isPossible(dimension = self.dimension):
       if grid[move.x1][move.y1].piece.isSome():
         let capture = self.getCapture(move, direction, grid)
         if capture.isSome():
           self.getNextLeg(capture.get(), grid)
-          return @[capture.get()]
+          return capture
 
   proc getMoves*(
     x, y: int,
@@ -426,7 +426,9 @@ class pub Board:
 
     if grid[x][y].piece.isSome():
       for direction in grid[x][y].piece.get().directions:
-        for move in self.getMove(x, y, direction, grid):
+        let potentialMove = self.getMove(x, y, direction, grid)
+        if potentialMove.isSome():
+          let move = potentialMove.get()
           if move.jump == true:
             captures &= move
           else:
