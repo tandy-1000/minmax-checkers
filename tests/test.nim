@@ -1,4 +1,4 @@
-import std/[unittest, options]
+import std/[unittest, options, coro]
 import ../src/classes
 
 # func for checking equality between `Move`s
@@ -772,6 +772,9 @@ suite "Board":
     let move = boardSix.minimax(boardSix.human, boardSix, depth = 5,
         maximising = true)
     boardSix.move(move, boardSix.grid)
+    if move.nextLeg != @[]:
+      if move.nextLeg.len == 1:
+        boardSix.move(move.nextLeg[0], boardSix.grid)
     boardSix.update(boardSix)
     let (gameOver, winner) = boardSix.isGameOver(boardSix)
     check move == newMove(0, 3, 2, 1, jump = true,
@@ -871,10 +874,98 @@ suite "Board":
           newGridSquare(GridColor.light)
         ]
       ]
+      endGrid = @[
+        @[
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark)
+        ],
+        @[
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.white, @[
+              Direction.southEast, Direction.southWest])),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light)
+        ],
+        @[
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark)
+        ],
+        @[
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light)
+        ],
+        @[
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark)
+        ],
+        @[
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light)
+        ],
+        @[
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.white, @[
+              Direction.southEast, Direction.southWest])),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark, some newPiece(PieceColor.brown, @[
+              Direction.northEast, Direction.northWest, Direction.southEast,
+              Direction.southWest], king = true)),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark)
+        ],
+        @[
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light),
+          newGridSquare(GridColor.dark),
+          newGridSquare(GridColor.light)
+        ]
+      ]
 
     ## set the grid to the scenario
     boardEight.grid = grid
     let move = boardEight.minimax(boardEight.human, boardEight, depth = 4,
         maximising = true)
+    boardEight.moveHuman(move, 0.01)
     check move == newMove(0, 3, 2, 1, jump = true, nextLeg = @[newMove(2, 1, 4,
-        3, jump = true, nextLeg = @[newMove(4, 3, 6, 5, jump = true)])])
+        3, jump = true, nextLeg = @[newMove(4, 3, 6, 5, jump = true)])]) and
+      boardEight.grid == endGrid

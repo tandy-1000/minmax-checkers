@@ -1,10 +1,5 @@
-import std/[options, enumerate]
+import std/[options, enumerate, coro]
 import pkg/[nico, oolib]
-
-when defined(emscripten):
-  proc sleep(ms: int) {.header: "<emscripten.h>", importc: "emscripten_sleep", varargs.}
-else:
-  import std/os
 
 
 type
@@ -296,11 +291,6 @@ class pub Board:
 
     ## if move is possible...
     if grid[move.x][move.y].piece.isSome():
-
-      ## sleep if AI move and is not a simulation
-      if grid[move.x][move.y].piece.get().color == self.ai and not simulation:
-        sleep(600)
-
       ## make move
       grid[move.x1][move.y1].piece = grid[move.x][move.y].piece
       grid[move.x][move.y].piece = none(Piece)
@@ -321,12 +311,30 @@ class pub Board:
         ## capture piece
         grid[midpoint.x][midpoint.y].piece = none(Piece)
 
-        if move.nextLeg != @[]:
-          if move.nextLeg.len == 1:
-            self.move(move.nextLeg[0], grid, simulation = simulation)
+  proc followNextLeg*(
+    move: Move,
+    grid: seq[seq[GridSquare]],
+    simulation: bool
+  ) =
+    ## Follows the next capture leg if there is only one next leg.
+    var nextLeg = move.nextLeg
+    while nextLeg != @[]:
+      if nextLeg.len == 1:
+        if not simulation:
+          suspend(1.0)
+        start(proc = self.move(move.nextLeg[0], grid, simulation = simulation))
+        if nextLeg[0].nextLeg != @[]:
+          nextLeg = nextLeg[0].nextLeg
+        else:
+          nextLeg = @[]
+      else:
+        nextLeg = @[]
 
-  proc getCapture*(move: Move, direction: Direction, grid: seq[seq[
-      GridSquare]]): Option[Move] =
+  proc getCapture*(
+    move: Move,
+    direction: Direction,
+    grid: seq[seq[GridSquare]]
+  ): Option[Move] =
     ## Returns a `Move` object if a capture is possible.
 
     let capture = self.getJump(move, direction)
@@ -354,8 +362,11 @@ class pub Board:
             self.getNextLeg(nextCapture.get(), gridCopy)
             capture.nextLeg &= nextCapture.get()
 
-  proc getMove*(x, y: int, direction: Direction, grid: seq[seq[
-      GridSquare]]): seq[Move] =
+  proc getMove*(
+    x, y: int,
+    direction: Direction,
+    grid: seq[seq[GridSquare]]
+  ): seq[Move] =
     ## Returns a sequence of `Move` object given a coordinate and a `Direction`
 
     let move = self.nextSquare(x, y, direction)
@@ -518,6 +529,7 @@ class pub Board:
       for move in self.getPlayerMoves(maxPlayer, board.grid):
         boardCopy = deepcopy(board)
         self.move(move, boardCopy.grid, simulation = true)
+        self.followNextLeg(move, boardCopy.grid, simulation = true)
         # ## if more than one nextLeg
         # if move.nextLeg.len > 1:
         #   ## iterate over legs
@@ -548,6 +560,7 @@ class pub Board:
       for move in self.getPlayerMoves(minPlayer, board.grid):
         boardCopy = deepcopy(board)
         self.move(move, boardCopy.grid, simulation = true)
+        self.followNextLeg(move, boardCopy.grid, simulation = true)
         # ## if more than one nextLeg
         # if move.nextLeg.len > 1:
         #   ## iterate over legs
@@ -574,11 +587,23 @@ class pub Board:
 
       return minMove
 
-  proc moveAI* =
+  proc moveHuman*(move: Move) =
+    ## Makes human move
+
+    self.move(move, self.grid)
+    self.followNextLeg(move, self.grid, simulation = false)
+    wait(start(proc = self.followNextLeg(move, self.grid, simulation = false)))
+    run()
+    if move.nextLeg.len <= 1:
+      self.changeTurn()
+
+  proc moveAI*(maxPlayer: PieceColor, depth = ord self.difficulty) =
     ## Makes best move
 
-    let move = self.minimax(self.ai, self, depth = ord self.difficulty)
+    let move = self.minimax(maxPlayer, self, depth = depth)
     self.move(move, self.grid)
+    wait(start(proc = self.followNextLeg(move, self.grid, simulation = false)))
+    run()
     self.changeTurn()
 
 
@@ -618,17 +643,6 @@ class pub Checkers:
       y = y1
     self.gridSquare = newSquare(self.offset, self.offset, y, y)
 
-  proc cleanGrid*(clue = false) =
-    ## Removes "potential" pieces from the grid, which are placed when a mouse
-    ## hovers on the grid when a piece is selected.
-
-    for x in 0 ..< self.board.dimension:
-      for y in 0 ..< self.board.dimension:
-        if self.board.grid[x][y].potential:
-          self.board.grid[x][y].potential = false
-        elif clue and self.board.grid[x][y].clue and not self.showClues:
-          self.board.grid[x][y].clue = false
-
   proc drawPiece*(piece: Piece, gridBound: Square, clue = false, offset = 5) =
     ## Draws a piece on the board.
 
@@ -664,6 +678,44 @@ class pub Checkers:
     if piece.king:
       setColor(9)
       printc("K", x2 + 1, y2 - 3)
+
+  proc drawBoard*() =
+    # Draws the Checkers board.
+
+    var square: Square
+
+    for x in 0 ..< self.board.dimension:
+      for y in 0 ..< self.board.dimension:
+        square = self.gridBounds[x][y]
+        if self.board.grid[x][y].color == GridColor.light:
+          setColor(7)
+          rectfill(square.x, square.y, square.x1, square.y1)
+        else:
+          setColor(3)
+          rectfill(square.x, square.y, square.x1, square.y1)
+
+        if self.board.grid[x][y].potential:
+          if self.board.grid[x][y].piece.isNone():
+            self.drawPiece(newPiece(self.board.turn), square)
+          elif self.selected.isSome():
+            self.drawPiece(newPiece(self.board.turn, king = self.board.grid[
+                self.selected.get().x][self.selected.get().y].piece.get().king), square)
+        elif self.board.grid[x][y].clue:
+          self.drawPiece(newPiece(self.board.turn), square, clue = true)
+        else:
+          if self.board.grid[x][y].piece.isSome():
+            self.drawPiece(self.board.grid[x][y].piece.get(), square)
+
+  proc cleanGrid*(clue = false) =
+    ## Removes "potential" pieces from the grid, which are placed when a mouse
+    ## hovers on the grid when a piece is selected.
+
+    for x in 0 ..< self.board.dimension:
+      for y in 0 ..< self.board.dimension:
+        if self.board.grid[x][y].potential:
+          self.board.grid[x][y].potential = false
+        elif clue and self.board.grid[x][y].clue and not self.showClues:
+          self.board.grid[x][y].clue = false
 
   ## Returns a grid index from a mouse position
   proc xyToGrid*(pos: tuple[y: int, x: int]): (int, int) = ((pos.x -
@@ -708,9 +760,7 @@ class pub Checkers:
         if ind != -1:
           move = playerMoves[ind]
           self.deselect (move.x, move.y)
-          self.board.move(move, self.board.grid)
-          if move.nextLeg.len <= 1:
-            self.board.changeTurn()
+          self.board.moveHuman(move)
           self.successfulMove = true
         else:
           self.successfulMove = false

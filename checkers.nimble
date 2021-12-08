@@ -14,8 +14,8 @@ srcDir = "src"
 
 import strformat
 
-const releaseOpts = "-d:danger"
-const debugOpts = "-d:debug"
+const releaseOpts = "-d:nimCoroutines -d:danger"
+const debugOpts = "-d:nimCoroutines -d:debug"
 
 task runr, "Runs checkers for current platform":
  exec &"nim c -r {releaseOpts} -o:checkers src/main.nim"
@@ -58,4 +58,4 @@ task androidr, "Release build for android":
       exec "./gradlew assembleDebug"
 
 task test, "run tests":
-  exec "nim r tests/test.nim"
+  exec "nim -d:nimCoroutines r tests/test.nim"
