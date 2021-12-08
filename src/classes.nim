@@ -251,6 +251,37 @@ class pub Board:
     board.aiMen = aiMen
     board.aiKings = aiKings
 
+  proc move*(
+    move: Move,
+    grid: seq[seq[GridSquare]],
+    simulation = false
+  ) =
+    ## Moves a piece on the grid, given a `Move` object and a grid.
+    ## Also changes the current turn, and can account for kings, multi-leg
+    ##  captures.
+
+    ## if move is possible...
+    if grid[move.x][move.y].piece.isSome():
+      ## make move
+      grid[move.x1][move.y1].piece = grid[move.x][move.y].piece
+      grid[move.x][move.y].piece = none(Piece)
+
+      ## king at baseline
+      if grid[move.x1][move.y1].piece.get().color == self.human and move.x1 ==
+          0 or grid[move.x1][move.y1].piece.get().color == self.ai and
+          move.x1 == self.dimension - 1:
+        grid[move.x1][move.y1].piece.get().makeKing()
+
+      if move.jump:
+        let midpoint = move.midpoint()
+
+        ## regicide
+        if grid[midpoint.x][midpoint.y].piece.get().king == true:
+          grid[move.x1][move.y1].piece.get().makeKing()
+
+        ## capture piece
+        grid[midpoint.x][midpoint.y].piece = none(Piece)
+
   proc getNextSquare*(
     x, y: int,
     direction: Direction
@@ -323,37 +354,6 @@ class pub Board:
 
     if self.isMoveLegal(capture, grid):
       return some capture
-
-  proc move*(
-    move: Move,
-    grid: seq[seq[GridSquare]],
-    simulation = false
-  ) =
-    ## Moves a piece on the grid, given a `Move` object and a grid.
-    ## Also changes the current turn, and can account for kings, multi-leg
-    ##  captures.
-
-    ## if move is possible...
-    if grid[move.x][move.y].piece.isSome():
-      ## make move
-      grid[move.x1][move.y1].piece = grid[move.x][move.y].piece
-      grid[move.x][move.y].piece = none(Piece)
-
-      ## king at baseline
-      if grid[move.x1][move.y1].piece.get().color == self.human and move.x1 ==
-          0 or grid[move.x1][move.y1].piece.get().color == self.ai and
-          move.x1 == self.dimension - 1:
-        grid[move.x1][move.y1].piece.get().makeKing()
-
-      if move.jump:
-        let midpoint = move.midpoint()
-
-        ## regicide
-        if grid[midpoint.x][midpoint.y].piece.get().king == true:
-          grid[move.x1][move.y1].piece.get().makeKing()
-
-        ## capture piece
-        grid[midpoint.x][midpoint.y].piece = none(Piece)
 
   proc getNextLeg*(
     capture: Move,
