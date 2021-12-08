@@ -253,8 +253,7 @@ class pub Board:
 
   proc move*(
     move: Move,
-    grid: seq[seq[GridSquare]],
-    simulation = false
+    grid: seq[seq[GridSquare]]
   ) =
     ## Moves a piece on the grid, given a `Move` object and a grid.
     ## Also changes the current turn, and can account for kings, multi-leg
@@ -364,7 +363,7 @@ class pub Board:
     ## make grid copy
     let gridCopy = deepcopy(grid)
     ## simulate capture on grid copy
-    self.move(capture, gridCopy, simulation = true)
+    self.move(capture, gridCopy)
     ## get next leg of captures on simulation
     for direction in gridCopy[capture.x1][capture.y1].piece.get().directions:
       ## get next move
@@ -389,7 +388,7 @@ class pub Board:
       if nextLeg.len == 1:
         if not simulation:
           sleep(600)
-        self.move(move.nextLeg[0], grid, simulation = simulation)
+        self.move(move.nextLeg[0], grid)
         if nextLeg[0].nextLeg != @[]:
           nextLeg = nextLeg[0].nextLeg
         else:
@@ -577,7 +576,7 @@ class pub Board:
     if maximising:
       for move in self.getPlayerMoves(maxPlayer, board.grid):
         boardCopy = deepcopy(board)
-        self.move(move, boardCopy.grid, simulation = true)
+        self.move(move, boardCopy.grid)
         self.followNextLeg(move, boardCopy.grid, simulation = true)
         currentMove = self.minimax(minPlayer, boardCopy, depth - 1,
             not maximising, alpha, beta)
@@ -593,7 +592,7 @@ class pub Board:
     else:
       for move in self.getPlayerMoves(minPlayer, board.grid):
         boardCopy = deepcopy(board)
-        self.move(move, boardCopy.grid, simulation = true)
+        self.move(move, boardCopy.grid)
         self.followNextLeg(move, boardCopy.grid, simulation = true)
         currentMove = self.minimax(maxPlayer, boardCopy, depth - 1,
             not maximising, alpha, beta)
