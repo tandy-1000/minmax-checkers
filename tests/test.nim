@@ -74,16 +74,16 @@ suite "Board":
     check board.grid == grid
 
   test "Get next North East square":
-    check board.nextSquare(3, 0, Direction.northEast) == newMove(3, 0, 2, 1)
+    check board.getNextSquare(3, 0, Direction.northEast) == newMove(3, 0, 2, 1)
 
   test "Get next North West square":
-    check board.nextSquare(2, 3, Direction.northWest) == newMove(2, 3, 1, 2)
+    check board.getNextSquare(2, 3, Direction.northWest) == newMove(2, 3, 1, 2)
 
   test "Get next South East square":
-    check board.nextSquare(1, 0, Direction.southEast) == newMove(1, 0, 2, 1)
+    check board.getNextSquare(1, 0, Direction.southEast) == newMove(1, 0, 2, 1)
 
   test "Get next South West square":
-    check board.nextSquare(0, 1, Direction.southWest) == newMove(0, 1, 1, 0)
+    check board.getNextSquare(0, 1, Direction.southWest) == newMove(0, 1, 1, 0)
 
   test "Make move":
     let
@@ -116,7 +116,7 @@ suite "Board":
           newGridSquare(GridColor.light)
         ]
       ]
-    board.move(board.nextSquare(3, 0, Direction.northEast), board.grid)
+    board.move(board.getNextSquare(3, 0, Direction.northEast), board.grid)
     check board.grid == grid
 
   test "Get jump - capture":
@@ -383,7 +383,7 @@ suite "Board":
           newGridSquare(GridColor.light)
         ]
       ]
-    board.move(board.nextSquare(0, 3, Direction.southWest), board.grid)
+    board.move(board.getNextSquare(0, 3, Direction.southWest), board.grid)
     let capture = board.getCapture(newMove(2, 1, 1, 2), Direction.northEast,
         board.grid).get()
     board.move(capture, board.grid)
@@ -490,7 +490,7 @@ suite "Board":
           newGridSquare(GridColor.light)
         ]
       ]
-    board.move(board.nextSquare(0, 3, Direction.southWest), grid)
+    board.move(board.getNextSquare(0, 3, Direction.southWest), grid)
     let moves = board.getMoves(0, 1, grid)
     board.move(moves[0], grid)
     check grid[2][3].piece.get().king == true and moves.len == 1
@@ -634,7 +634,7 @@ suite "Board":
     check gameOver == false and winner == none PieceColor
 
   test "Game Over (true, human winner)":
-    board.move(board.nextSquare(0, 1, Direction.southEast), board.grid)
+    board.move(board.getNextSquare(0, 1, Direction.southEast), board.grid)
     board.move(board.getMove(0, 3, Direction.southWest, board.grid).get(), board.grid)
     let (gameOver, winner) = board.isGameOver(board)
     check gameOver == true and winner == some board.human

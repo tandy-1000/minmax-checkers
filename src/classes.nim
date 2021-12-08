@@ -251,7 +251,7 @@ class pub Board:
     board.aiMen = aiMen
     board.aiKings = aiKings
 
-  proc nextSquare*(
+  proc getNextSquare*(
     x, y: int,
     direction: Direction
   ): Move =
@@ -283,7 +283,7 @@ class pub Board:
   ): Move =
     ## Returns a jump move, one grid square ahead of the current move.
 
-    var newMove = self.nextSquare(move.x1, move.y1, direction)
+    var newMove = self.getNextSquare(move.x1, move.y1, direction)
     newMove.x = move.x
     newMove.y = move.y
     newMove.jump = true
@@ -368,7 +368,7 @@ class pub Board:
     ## get next leg of captures on simulation
     for direction in gridCopy[capture.x1][capture.y1].piece.get().directions:
       ## get next move
-      let nextMove = self.nextSquare(capture.x1, capture.y1, direction)
+      let nextMove = self.getNextSquare(capture.x1, capture.y1, direction)
       if nextMove.isPossible(dimension = self.dimension):
         ## if there is a piece in move end position
         if gridCopy[nextMove.x1][nextMove.y1].piece.isSome():
@@ -404,7 +404,7 @@ class pub Board:
   ): Option[Move] =
     ## Returns an optional `Move` object given a coordinate and a `Direction`
 
-    let move = self.nextSquare(x, y, direction)
+    let move = self.getNextSquare(x, y, direction)
 
     if self.isMoveLegal(move, grid):
       return some move
