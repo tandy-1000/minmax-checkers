@@ -529,20 +529,6 @@ class pub Board:
         boardCopy = deepcopy(board)
         self.move(move, boardCopy.grid, simulation = true)
         self.followNextLeg(move, boardCopy.grid, simulation = true)
-        # ## if more than one nextLeg
-        # if move.nextLeg.len > 1:
-        #   ## iterate over legs
-        #   for capture in move.nextLeg:
-        #     ## make copy of board
-        #     boardCaptureCopy = deepcopy(boardCopy)
-        #     ## make capture on board copy
-        #     self.move(capture, boardCaptureCopy.grid, simulation = true)
-        #     ## call minimax on board copy
-        #     let minimax = self.minimax(maxPlayer, boardCaptureCopy, depth = ord self.difficulty)
-        #     if bestCapture.score < minimax.score:
-        #       bestCapture = minimax
-        #   move.nextLeg = @[bestCapture]
-        #   self.move(bestCapture, boardCopy.grid, simulation = true)
 
         currentMove = self.minimax(minPlayer, boardCopy, depth - 1,
             not maximising, alpha, beta)
@@ -560,19 +546,6 @@ class pub Board:
         boardCopy = deepcopy(board)
         self.move(move, boardCopy.grid, simulation = true)
         self.followNextLeg(move, boardCopy.grid, simulation = true)
-        # ## if more than one nextLeg
-        # if move.nextLeg.len > 1:
-        #   ## iterate over legs
-        #   for capture in move.nextLeg:
-        #     ## make copy of board
-        #     boardCaptureCopy = deepcopy(boardCopy)
-        #     ## make capture on board copy
-        #     self.move(capture, boardCaptureCopy.grid, simulation = true)
-        #     ## call minimax on board copy
-        #     let minimax = self.minimax(maxPlayer, boardCaptureCopy, depth = ord self.difficulty)
-        #     if bestCapture.score < minimax.score:
-        #       bestCapture = minimax
-        #   self.move(bestCapture, boardCopy.grid, simulation = true)
 
         currentMove = self.minimax(maxPlayer, boardCopy, depth - 1,
             not maximising, alpha, beta)
