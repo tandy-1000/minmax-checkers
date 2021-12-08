@@ -835,8 +835,7 @@ class pub Checkers:
 
     if self.showClues:
       let move = self.board.minimax(self.board.human, self.board,
-          depth = ord self.board.difficulty, maximising = true, alpha = low(
-          BiggestInt), beta = high(BiggestInt))
+        depth = ord self.board.difficulty)
       self.board.grid[move.x1][move.y1].clue = true
 
   proc displayRules* =
