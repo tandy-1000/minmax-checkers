@@ -275,12 +275,12 @@ class pub Board:
 
     if move.isPossible(dimension = self.dimension):
       if move.jump:
-        if grid[move.x][move.y].piece.isSome() and grid[move.x1][
-            move.y1].piece.isNone():
+        if grid[move.x][move.y].piece.isSome() and
+            grid[move.x1][move.y1].piece.isNone():
           let (xMid, yMid) = move.midpoint()
           if grid[xMid][yMid].piece.isSome():
-            if grid[xMid][yMid].piece.get().color != grid[move.x][
-                move.y].piece.get().color:
+            if grid[xMid][yMid].piece.get().color !=
+                grid[move.x][move.y].piece.get().color:
               return true
       else:
         if grid[move.x1][move.y1].piece.isNone():
@@ -288,6 +288,16 @@ class pub Board:
           if dir.isSome():
             if dir.get() in grid[move.x][move.y].piece.get().directions:
               return true
+
+  proc getCapture*(move: Move, direction: Direction, grid: seq[seq[
+      GridSquare]]): Option[Move] =
+    ## Returns a `Move` object if a capture is possible.
+
+    let capture = self.getJump(move, direction)
+
+    if self.isMoveLegal(capture, grid):
+      return some capture
+
 
   proc move*(move: Move, grid: seq[seq[GridSquare]], simulation = false) =
     ## Moves a piece on the grid, given a `Move` object and a grid.
@@ -316,34 +326,6 @@ class pub Board:
         ## capture piece
         grid[midpoint.x][midpoint.y].piece = none(Piece)
 
-  proc followNextLeg*(
-    move: Move,
-    grid: seq[seq[GridSquare]],
-    simulation: bool
-  ) =
-    ## Follows the next capture leg if there is only one next leg.
-    var nextLeg = move.nextLeg
-    while nextLeg != @[]:
-      if nextLeg.len == 1:
-        if not simulation:
-          sleep(600)
-        self.move(move.nextLeg[0], grid, simulation = simulation)
-        if nextLeg[0].nextLeg != @[]:
-          nextLeg = nextLeg[0].nextLeg
-        else:
-          nextLeg = @[]
-      else:
-        nextLeg = @[]
-
-  proc getCapture*(move: Move, direction: Direction, grid: seq[seq[
-      GridSquare]]): Option[Move] =
-    ## Returns a `Move` object if a capture is possible.
-
-    let capture = self.getJump(move, direction)
-
-    if self.isMoveLegal(capture, grid):
-      return some capture
-
   proc getNextLeg*(capture: Move, grid: seq[seq[GridSquare]]) =
     ## Returns a `Move` object if another capture is possible
 
@@ -363,6 +345,25 @@ class pub Board:
           if nextCapture.isSome():
             self.getNextLeg(nextCapture.get(), gridCopy)
             capture.nextLeg &= nextCapture.get()
+
+  proc followNextLeg*(
+    move: Move,
+    grid: seq[seq[GridSquare]],
+    simulation: bool
+  ) =
+    ## Follows the next capture leg if there is only one next leg.
+    var nextLeg = move.nextLeg
+    while nextLeg != @[]:
+      if nextLeg.len == 1:
+        if not simulation:
+          sleep(600)
+        self.move(move.nextLeg[0], grid, simulation = simulation)
+        if nextLeg[0].nextLeg != @[]:
+          nextLeg = nextLeg[0].nextLeg
+        else:
+          nextLeg = @[]
+      else:
+        nextLeg = @[]
 
   proc getMove*(x, y: int, direction: Direction, grid: seq[seq[
       GridSquare]]): seq[Move] =
@@ -529,7 +530,6 @@ class pub Board:
         boardCopy = deepcopy(board)
         self.move(move, boardCopy.grid, simulation = true)
         self.followNextLeg(move, boardCopy.grid, simulation = true)
-
         currentMove = self.minimax(minPlayer, boardCopy, depth - 1,
             not maximising, alpha, beta)
         currentMove = move.copy(currentMove.score)
@@ -546,7 +546,6 @@ class pub Board:
         boardCopy = deepcopy(board)
         self.move(move, boardCopy.grid, simulation = true)
         self.followNextLeg(move, boardCopy.grid, simulation = true)
-
         currentMove = self.minimax(maxPlayer, boardCopy, depth - 1,
             not maximising, alpha, beta)
         currentMove = move.copy(currentMove.score)
