@@ -472,10 +472,10 @@ class pub Board:
 
     if maxPlayer == board.human:
       return (board.humanMen - board.aiMen) + ((board.humanKings -
-          board.aiKings) div 2)
+          board.aiKings) * 2)
     elif maxPlayer == board.ai:
       return (board.aiMen - board.humanMen) + ((board.aiKings -
-          board.humanKings) div 2)
+          board.humanKings) * 2)
 
   proc minimax*(
     player: PieceColor,
@@ -488,7 +488,6 @@ class pub Board:
     var
       maxPlayer, minPlayer: PieceColor
       boardCopy: Board
-      # boardCaptureCopy: Board
       bestCapture: Move
       minMove = newMove(-1, -1, -1, -1, score = beta, depth = depth)
       maxMove = newMove(-1, -1, -1, -1, score = alpha, depth = depth)
