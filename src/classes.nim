@@ -488,7 +488,6 @@ class pub Board:
     var
       maxPlayer, minPlayer: PieceColor
       boardCopy: Board
-      bestCapture: Move
       minMove = newMove(-1, -1, -1, -1, score = beta, depth = depth)
       maxMove = newMove(-1, -1, -1, -1, score = alpha, depth = depth)
       currentMove = newMove(-1, -1, -1, -1, score = 0, depth = depth)
