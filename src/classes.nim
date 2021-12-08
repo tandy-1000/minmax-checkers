@@ -24,9 +24,17 @@ class pub Piece:
     king*, selected*: bool
     directions*: seq[Direction]
 
-  proc `new`(color: PieceColor, directions: seq[Direction] = @[
-      Direction.northEast, Direction.northWest, Direction.southEast,
-      Direction.southWest], king, selected: bool = false) =
+  proc `new`(
+    color: PieceColor,
+    directions = @[
+      Direction.northEast,
+      Direction.northWest,
+      Direction.southEast,
+      Direction.southWest
+    ],
+    king, selected: bool = false
+  ) =
+
     self.color = color
     self.directions = directions
     self.king = king
@@ -49,8 +57,11 @@ class pub GridSquare:
     piece*: Option[Piece]
     potential*, clue*: bool
 
-  proc `new`(color: GridColor, piece: Option[Piece] = none(Piece), potential,
-      clue: bool = false) =
+  proc `new`(
+    color: GridColor,
+    piece: Option[Piece] = none(Piece),
+    potential, clue: bool = false
+  ) =
     self.color = color
     self.piece = piece
     self.potential = potential
@@ -181,7 +192,10 @@ class pub Board:
     humanMen*, humanKings*, aiMen*, aiKings * = 0
     difficulty*: Difficulty
 
-  proc `new`(difficulty: Difficulty, dimension: int = 8): Board =
+  proc `new`(
+    difficulty: Difficulty,
+    dimension: int = 8
+  ): Board =
     ## Initialises a `Board` object.
     ## Populates the board with dark and light squares, and brown and white
     ##  players.
@@ -237,7 +251,10 @@ class pub Board:
     board.aiMen = aiMen
     board.aiKings = aiKings
 
-  proc nextSquare*(x, y: int, direction: Direction): Move =
+  proc nextSquare*(
+    x, y: int,
+    direction: Direction
+  ): Move =
     ## Returns a `Move` object for a given direction and coordinate.
 
     var
@@ -260,7 +277,10 @@ class pub Board:
 
     return newMove(x, y, x1, y1)
 
-  proc getJump*(move: Move, direction: Direction): Move =
+  proc getJump*(
+    move: Move,
+    direction: Direction
+  ): Move =
     ## Returns a jump move, one grid square ahead of the current move.
 
     var newMove = self.nextSquare(move.x1, move.y1, direction)
@@ -270,7 +290,10 @@ class pub Board:
 
     return newMove
 
-  proc isMoveLegal*(move: Move, grid: seq[seq[GridSquare]]): bool =
+  proc isMoveLegal*(
+    move: Move,
+    grid: seq[seq[GridSquare]]
+  ): bool =
     ## Returns true if a move is possible.
 
     if move.isPossible(dimension = self.dimension):
@@ -289,8 +312,11 @@ class pub Board:
             if dir.get() in grid[move.x][move.y].piece.get().directions:
               return true
 
-  proc getCapture*(move: Move, direction: Direction, grid: seq[seq[
-      GridSquare]]): Option[Move] =
+  proc getCapture*(
+    move: Move,
+    direction: Direction,
+    grid: seq[seq[GridSquare]]
+  ): Option[Move] =
     ## Returns a `Move` object if a capture is possible.
 
     let capture = self.getJump(move, direction)
@@ -298,8 +324,11 @@ class pub Board:
     if self.isMoveLegal(capture, grid):
       return some capture
 
-
-  proc move*(move: Move, grid: seq[seq[GridSquare]], simulation = false) =
+  proc move*(
+    move: Move,
+    grid: seq[seq[GridSquare]],
+    simulation = false
+  ) =
     ## Moves a piece on the grid, given a `Move` object and a grid.
     ## Also changes the current turn, and can account for kings, multi-leg
     ##  captures.
@@ -326,7 +355,10 @@ class pub Board:
         ## capture piece
         grid[midpoint.x][midpoint.y].piece = none(Piece)
 
-  proc getNextLeg*(capture: Move, grid: seq[seq[GridSquare]]) =
+  proc getNextLeg*(
+    capture: Move,
+    grid: seq[seq[GridSquare]]
+  ) =
     ## Returns a `Move` object if another capture is possible
 
     ## make grid copy
@@ -365,8 +397,11 @@ class pub Board:
       else:
         nextLeg = @[]
 
-  proc getMove*(x, y: int, direction: Direction, grid: seq[seq[
-      GridSquare]]): seq[Move] =
+  proc getMove*(
+    x, y: int,
+    direction: Direction,
+    grid: seq[seq[GridSquare]]
+  ): seq[Move] =
     ## Returns a sequence of `Move` object given a coordinate and a `Direction`
 
     let move = self.nextSquare(x, y, direction)
@@ -380,7 +415,10 @@ class pub Board:
           self.getNextLeg(capture.get(), grid)
           return @[capture.get()]
 
-  proc getMoves*(x, y: int, grid: seq[seq[GridSquare]]): seq[Move] =
+  proc getMoves*(
+    x, y: int,
+    grid: seq[seq[GridSquare]]
+  ): seq[Move] =
     ## Returns a sequence of `Move` objects for a given coordinate.
     ## If captures are available, only they are returned.
 
@@ -408,7 +446,10 @@ class pub Board:
     elif player == self.ai:
       return self.aiPieces
 
-  proc getPlayerMoves*(player: PieceColor, grid: seq[seq[GridSquare]]): seq[Move] =
+  proc getPlayerMoves*(
+    player: PieceColor,
+    grid: seq[seq[GridSquare]]
+  ): seq[Move] =
     ## Returns a sequence of `Move`s for each move a given player can make on
     ## the grid.
     ## Must call `update` first.
@@ -440,7 +481,10 @@ class pub Board:
 
     self.turn = self.opposingPlayer(self.turn)
 
-  proc hasPlayerLost*(player: PieceColor, grid: seq[seq[GridSquare]]): bool =
+  proc hasPlayerLost*(
+    player: PieceColor,
+    grid: seq[seq[GridSquare]]
+  ): bool =
     ## Returns true if a player has no pieces or moves left, otherwise false.
     ## Must call `update` first.
 
@@ -472,7 +516,10 @@ class pub Board:
 
     return (gameOver, winner)
 
-  proc evaluate*(maxPlayer: PieceColor, board: Board): BiggestInt =
+  proc evaluate*(
+    maxPlayer: PieceColor,
+    board: Board
+  ): BiggestInt =
     ## Evaluates the board for a given `maxPlayer`.
 
     if maxPlayer == board.human:
@@ -566,7 +613,10 @@ class pub Board:
     if move.nextLeg.len <= 1:
       self.changeTurn()
 
-  proc moveAI*(maxPlayer: PieceColor, depth = ord self.difficulty) =
+  proc moveAI*(
+    maxPlayer: PieceColor,
+    depth = ord self.difficulty
+  ) =
     ## Makes best move
 
     let move = self.minimax(maxPlayer, self, depth = depth)
@@ -611,7 +661,12 @@ class pub Checkers:
       y = y1
     self.gridSquare = newSquare(self.offset, self.offset, y, y)
 
-  proc drawPiece*(piece: Piece, gridBound: Square, clue = false, offset = 5) =
+  proc drawPiece*(
+    piece: Piece,
+    gridBound: Square,
+    clue = false,
+    offset = 5
+  ) =
     ## Draws a piece on the board.
 
     let
@@ -647,7 +702,7 @@ class pub Checkers:
       setColor(9)
       printc("K", x2 + 1, y2 - 3)
 
-  proc drawBoard*() =
+  proc drawBoard* =
     # Draws the Checkers board.
 
     var square: Square
@@ -687,7 +742,7 @@ class pub Checkers:
 
   ## Returns a grid index from a mouse position
   proc xyToGrid*(pos: tuple[y: int, x: int]): (int, int) = ((pos.x -
-      self.offset) div self.size, (pos.y - self.offset) div self.size)
+    self.offset) div self.size, (pos.y - self.offset) div self.size)
 
   proc find*(mov: Move, moves: seq[Move]): int =
     ## Find a `Move` object in a sequence of `Move`s
@@ -808,14 +863,20 @@ class pub Checkers:
     printc("hard", hCenter + (2*d) + 3, diffRowY - 3)
     printc("Start", hCenter + 1, (screenHeight - padding*2) - 3)
 
-  proc isInBounds*(pos: (int, int), square: Square): bool =
+  proc isInBounds*(
+    pos: (int, int),
+    square: Square
+  ): bool =
     ## Checks whether a mouse coordinate within a given `Square`'s bounds.
 
     if (pos[0] >= square.x and pos[0] <= square.x1) and (pos[1] >= square.y and
         pos[1] <= square.y1):
       result = true
 
-  proc isOutOfBounds*(pos: (int, int), square: Square): bool =
+  proc isOutOfBounds*(
+    pos: (int, int),
+    square: Square
+  ): bool =
     ## Checks whether a mouse coordinate outside of a given `Square`'s bounds.
 
     if (pos[0] <= square.x or pos[0] >= square.x1) or (pos[1] <= square.y or
@@ -862,7 +923,10 @@ class pub Checkers:
           screenWidth div 2) + 2, midpoint + 20)
       printc("or capture another king.", screenWidth div 2, midpoint + 28)
 
-  proc gameOverMessage*(message: string, color: int) =
+  proc gameOverMessage*(
+    message: string,
+    color: int
+  ) =
     ## Draws a game over message.
 
     let
