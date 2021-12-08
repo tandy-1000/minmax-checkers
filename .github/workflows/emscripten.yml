@@ -39,6 +39,7 @@ jobs:
         with:
           add: build/
           force: true
+          branch: main
           message: 'Latest web build'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
