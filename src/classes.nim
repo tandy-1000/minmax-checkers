@@ -498,11 +498,9 @@ class pub Board:
     if maximising:
       maxPlayer = player
       minPlayer = self.opposingPlayer(player)
-      bestCapture = maxMove
     else:
       maxPlayer = self.opposingPlayer(player)
       minPlayer = player
-      bestCapture = minMove
 
     self.update(board)
     let (gameOver, winner) = self.isGameOver(board)
